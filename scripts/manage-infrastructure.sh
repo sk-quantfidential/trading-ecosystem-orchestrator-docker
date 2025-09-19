@@ -41,31 +41,31 @@ EOF
 case "${1:-}" in
     start)
         echo "🚀 Starting Trading Ecosystem Infrastructure..."
-        docker-compose up -d
+        docker compose up -d
         echo "✅ Infrastructure started. Run '$0 validate' to check health."
         ;;
 
     stop)
         echo "🛑 Stopping infrastructure services..."
-        docker-compose down
+        docker compose down
         echo "✅ Services stopped (volumes preserved)"
         ;;
 
     restart)
         echo "🔄 Restarting infrastructure services..."
-        docker-compose restart
+        docker compose restart
         echo "✅ Services restarted"
         ;;
 
     clean)
         echo "🧹 Cleaning up infrastructure (removes volumes)..."
-        docker-compose down -v
+        docker compose down -v
         echo "✅ Complete cleanup finished"
         ;;
 
     status)
         echo "📊 Infrastructure Service Status:"
-        docker-compose ps
+        docker compose ps
         ;;
 
     validate)
@@ -76,10 +76,10 @@ case "${1:-}" in
     logs)
         if [ -n "${2:-}" ]; then
             echo "📝 Showing logs for service: $2"
-            docker-compose logs -f "$2"
+            docker compose logs -f "$2"
         else
             echo "📝 Showing logs for all services (Ctrl+C to exit)"
-            docker-compose logs -f
+            docker compose logs -f
         fi
         ;;
 

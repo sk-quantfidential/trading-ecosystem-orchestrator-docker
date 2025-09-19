@@ -27,10 +27,12 @@ This repository provides the foundational infrastructure for the Trading Ecosyst
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker 24.0+
-- Docker Compose 2.8+
+- Docker 24.0+ (with Compose plugin)
+- Docker Compose V2 (modern `docker compose` command)
 - 4GB RAM minimum (8GB recommended for full observability stack)
 - Available ports: 3000, 5432, 6379, 8080, 9090, 16686, 4317, 4318
+
+> **Note**: This project uses the modern `docker compose` command (with space) instead of the deprecated `docker-compose` (with hyphen). If you're using an older Docker installation, please upgrade to Docker 24.0+ which includes Compose V2.
 
 ### One-Command Deployment
 ```bash
@@ -47,13 +49,13 @@ This repository provides the foundational infrastructure for the Trading Ecosyst
 ### Alternative: Direct Docker Compose
 ```bash
 # Start all infrastructure services
-docker-compose up -d
+docker compose up -d
 
 # Validate deployment
 ./scripts/validate-infrastructure.sh
 
 # Stop all services
-docker-compose down
+docker compose down
 ```
 
 ### Access Points
@@ -95,42 +97,42 @@ For simplified operations, use the infrastructure management utility:
 
 ```bash
 # Start all services (recommended)
-docker-compose up -d
+docker compose up -d
 
 # Start specific services only
-docker-compose up -d redis postgres service-registry
+docker compose up -d redis postgres service-registry
 
 # Start with logs visible (for debugging)
-docker-compose up
+docker compose up
 
 # Start infrastructure + observability
-docker-compose up -d redis postgres service-registry prometheus grafana
+docker compose up -d redis postgres service-registry prometheus grafana
 
 # Force recreate containers
-docker-compose up -d --force-recreate
+docker compose up -d --force-recreate
 ```
 
 ### Stopping Services
 
 ```bash
 # Stop all services (keeps volumes)
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (complete cleanup)
-docker-compose down -v
+docker compose down -v
 
 # Stop specific service
-docker-compose stop redis
+docker compose stop redis
 
 # Stop and remove specific service container
-docker-compose rm -f redis
+docker compose rm -f redis
 ```
 
 ### Service Status & Health Checks
 
 ```bash
 # Check service status
-docker-compose ps
+docker compose ps
 
 # Validate all services are healthy
 ./scripts/validate-infrastructure.sh
@@ -153,51 +155,51 @@ pg_isready -h localhost -p 5432 -U postgres -d trading_ecosystem
 
 ```bash
 # View all service logs
-docker-compose logs
+docker compose logs
 
 # Follow logs in real-time
-docker-compose logs -f
+docker compose logs -f
 
 # View specific service logs
-docker-compose logs redis
-docker-compose logs postgres
-docker-compose logs service-registry
-docker-compose logs prometheus
-docker-compose logs grafana
-docker-compose logs jaeger
-docker-compose logs otel-collector
+docker compose logs redis
+docker compose logs postgres
+docker compose logs service-registry
+docker compose logs prometheus
+docker compose logs grafana
+docker compose logs jaeger
+docker compose logs otel-collector
 
 # Follow specific service logs
-docker-compose logs -f grafana
+docker compose logs -f grafana
 
 # View recent logs with timestamps
-docker-compose logs -t --tail=100
+docker compose logs -t --tail=100
 ```
 
 ### Service Operations
 
 ```bash
 # Restart specific service
-docker-compose restart redis
+docker compose restart redis
 
 # Restart all services
-docker-compose restart
+docker compose restart
 
 # Scale services (if needed)
-docker-compose up -d --scale service-registry=2
+docker compose up -d --scale service-registry=2
 
 # Update service configuration
 # 1. Edit configuration files
 # 2. Restart affected services
-docker-compose restart prometheus  # After editing prometheus.yml
+docker compose restart prometheus  # After editing prometheus.yml
 
 # Execute commands in running containers
-docker-compose exec redis redis-cli
-docker-compose exec postgres psql -U postgres -d trading_ecosystem
-docker-compose exec service-registry sh
+docker compose exec redis redis-cli
+docker compose exec postgres psql -U postgres -d trading_ecosystem
+docker compose exec service-registry sh
 
 # View resource usage
-docker stats $(docker-compose ps -q)
+docker stats $(docker compose ps -q)
 ```
 
 ### Validation & Troubleshooting
@@ -213,17 +215,17 @@ curl -f http://localhost:3000/api/health && echo "✅ Grafana OK"
 curl -f http://localhost:13133/ && echo "✅ OpenTelemetry Collector OK"
 
 # Check Docker Compose configuration
-docker-compose config
+docker compose config
 
 # Validate network connectivity between services
-docker-compose exec service-registry ping redis
-docker-compose exec service-registry ping postgres
+docker compose exec service-registry ping redis
+docker compose exec service-registry ping postgres
 
 # Check service discovery
 redis-cli -h localhost -p 6379 --no-auth-warning -u "redis://healthcheck:health-pass@localhost:6379" KEYS "registry:services:*"
 
 # Check database schemas
-docker-compose exec postgres psql -U postgres -d trading_ecosystem -c "\dn"
+docker compose exec postgres psql -U postgres -d trading_ecosystem -c "\dn"
 ```
 
 ### Common Issues & Solutions
@@ -234,22 +236,22 @@ sudo lsof -i :6379  # Check what's using Redis port
 sudo lsof -i :5432  # Check what's using PostgreSQL port
 
 # Service won't start
-docker-compose logs <service-name>  # Check logs for errors
-docker-compose ps                   # Check service status
+docker compose logs <service-name>  # Check logs for errors
+docker compose ps                   # Check service status
 
 # Clear everything and restart
-docker-compose down -v             # Stop and remove volumes
+docker compose down -v             # Stop and remove volumes
 docker system prune -f             # Clean up Docker
-docker-compose up -d               # Start fresh
+docker compose up -d               # Start fresh
 
 # Redis connection issues
-docker-compose exec redis redis-cli ping  # Test from inside container
+docker compose exec redis redis-cli ping  # Test from inside container
 
 # PostgreSQL connection issues
-docker-compose exec postgres pg_isready -U postgres  # Test from inside container
+docker compose exec postgres pg_isready -U postgres  # Test from inside container
 
 # Health check failures
-docker-compose exec <service> wget --spider http://localhost:<port>/health
+docker compose exec <service> wget --spider http://localhost:<port>/health
 ```
 
 ## 📁 Repository Structure
@@ -286,7 +288,7 @@ orchestrator-docker/
 
 | File | Purpose | Key Features |
 |------|---------|--------------|
-| `docker-compose.yml` | Service orchestration | 7 services, health checks, networking |
+| `docker-compose.yml` | Service orchestration | 7 services, health checks, networking (modern docker compose) |
 | `scripts/manage-infrastructure.sh` | Infrastructure utility | Start, stop, validate, logs, status |
 | `scripts/validate-infrastructure.sh` | Health validation | Automated testing of all services |
 | `redis/redis.conf` | Redis configuration | ACL security, performance tuning |
@@ -496,16 +498,16 @@ open http://localhost:16686
 ./scripts/deploy.sh [dev|test|prod]
 
 # Update single service
-docker-compose up -d --no-deps risk-monitor
+docker compose up -d --no-deps risk-monitor
 
 # Scale services (if needed)
-docker-compose up -d --scale trading-engine=2
+docker compose up -d --scale trading-engine=2
 
 # View service status
-docker-compose ps
+docker compose ps
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Complete cleanup (removes volumes)
 ./scripts/cleanup.sh
@@ -514,19 +516,19 @@ docker-compose down
 ### Troubleshooting
 ```bash
 # View service logs
-docker-compose logs -f [service-name]
+docker compose logs -f [service-name]
 
 # Restart problematic service
-docker-compose restart risk-monitor
+docker compose restart risk-monitor
 
 # Check network connectivity
-docker-compose exec risk-monitor ping exchange-simulator
+docker compose exec risk-monitor ping exchange-simulator
 
 # Validate configuration
-docker-compose config
+docker compose config
 
 # Debug container issues
-docker-compose exec risk-monitor bash
+docker compose exec risk-monitor bash
 ```
 
 ## 🌐 Network Architecture
@@ -578,7 +580,7 @@ networks:
 ## 🤝 Contributing
 
 ### Adding New Services
-1. Add service definition to `docker-compose.yml`
+1. Add service definition to `docker compose.yml`
 2. Configure appropriate networks and dependencies
 3. Add health checks and resource limits
 4. Update environment files with service configuration
@@ -587,7 +589,7 @@ networks:
 
 ### Modifying Orchestration
 1. Test changes in development environment first
-2. Validate with `docker-compose config`
+2. Validate with `docker compose config`
 3. Update environment-specific overrides as needed
 4. Test deployment scripts and health checks
 5. Update documentation for any configuration changes

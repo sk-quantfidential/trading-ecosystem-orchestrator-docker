@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Trading Ecosystem Infrastructure
 # Redis for service discovery and caching + PostgreSQL for persistent storage
 

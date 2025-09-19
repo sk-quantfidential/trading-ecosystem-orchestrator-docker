@@ -31,7 +31,7 @@ check_docker_service() {
     local description=$2
 
     echo -n "Checking $description... "
-    if docker-compose ps --services --filter status=running | grep -q "^$service_name$"; then
+    if docker compose ps --services --filter status=running | grep -q "^$service_name$"; then
         echo "✅ RUNNING"
         return 0
     else
