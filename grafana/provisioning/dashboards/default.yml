@@ -1,0 +1,35 @@
+# Grafana Dashboard Provisioning for Trading Ecosystem
+# Automatically loads dashboards from the dashboards directory
+
+apiVersion: 1
+
+providers:
+  - name: 'Trading Ecosystem Infrastructure'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/infrastructure
+
+  - name: 'Trading Ecosystem Services'
+    orgId: 1
+    folder: 'Services'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/services
+
+  - name: 'Trading Ecosystem Business'
+    orgId: 1
+    folder: 'Business Metrics'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/business

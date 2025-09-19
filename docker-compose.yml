@@ -1,0 +1,237 @@
+# Trading Ecosystem Infrastructure
+# Redis for service discovery and caching + PostgreSQL for persistent storage
+
+networks:
+  trading-ecosystem:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  jaeger-data:
+  otel-data:
+
+services:
+  # Redis - Service Discovery and Caching
+  redis:
+    image: redis:8-alpine
+    container_name: trading-ecosystem-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.10
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis/users.acl:/usr/local/etc/redis/users.acl:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-u", "redis://healthcheck:health-pass@localhost:6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+  # PostgreSQL - Persistent Data Storage
+  postgres:
+    image: postgres:17-alpine
+    container_name: trading-ecosystem-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    environment:
+      POSTGRES_DB: trading_ecosystem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres-admin-pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trading_ecosystem"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Service Registry and Configuration
+  service-registry:
+    image: alpine:3.19
+    container_name: trading-ecosystem-registry
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.30
+    volumes:
+      - ./registry:/app
+    working_dir: /app
+    command: ["./registry-service.sh"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  # Prometheus - Metrics Collection and Monitoring
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: trading-ecosystem-prometheus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.40
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--log.level=info'
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Grafana - Visualization and Dashboards
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: trading-ecosystem-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.50
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_INSTALL_PLUGINS=redis-datasource,grafana-clock-panel
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.51.0
+    container_name: trading-ecosystem-jaeger
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:16686:16686"  # Jaeger UI
+      - "127.0.0.1:14268:14268"  # HTTP collector
+      - "127.0.0.1:14269:14269"  # HTTP admin/metrics
+      - "127.0.0.1:14250:14250"  # gRPC collector
+      - "127.0.0.1:6831:6831/udp"  # UDP jaeger-agent
+      - "127.0.0.1:6832:6832/udp"  # UDP jaeger-agent
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.60
+    volumes:
+      - jaeger-data:/tmp
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://172.20.0.40:9090
+      - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=50000
+      - LOG_LEVEL=info
+    command:
+      - "--memory.max-traces=50000"
+      - "--query.base-path=/"
+      - "--admin.http.host-port=:14269"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:14269/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # OpenTelemetry Collector - Telemetry Aggregation
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.88.0
+    container_name: trading-ecosystem-otel-collector
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4317:4317"   # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318"   # OTLP HTTP receiver
+      - "127.0.0.1:8888:8888"   # Prometheus metrics endpoint
+      - "127.0.0.1:8889:8889"   # Prometheus exporter endpoint
+      - "127.0.0.1:13133:13133" # Health check endpoint
+      - "127.0.0.1:1777:1777"   # pprof profiling
+      - "127.0.0.1:55679:55679" # zPages debugging
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.70
+    volumes:
+      - otel-data:/tmp
+      - ./otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:13133/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
