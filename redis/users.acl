@@ -1,0 +1,35 @@
+# Redis ACL Configuration for Trading Ecosystem
+# Following security best practices with least privilege access
+
+# Disable default user for security
+user default off
+
+# Admin user for infrastructure management
+user admin on >admin-secure-pass ~* &* +@all
+
+# Health check user (minimal permissions)
+user healthcheck on >health-pass ~* +ping +info
+
+# Service registry user
+user registry on >registry-pass ~registry:* ~config:* +@read +@write +@keyspace -@dangerous
+
+# Data adapter users with namespace isolation
+user market-adapter on >market-pass ~market:* +@read +@write +@keyspace -@dangerous
+user exchange-adapter on >exchange-pass ~exchange:* +@read +@write +@keyspace -@dangerous
+user custodian-adapter on >custodian-pass ~custodian:* +@read +@write +@keyspace -@dangerous
+user risk-adapter on >risk-pass ~risk:* +@read +@write +@keyspace -@dangerous
+user trading-adapter on >trading-pass ~trading:* +@read +@write +@keyspace -@dangerous
+user test-adapter on >test-pass ~test:* +@read +@write +@keyspace -@dangerous
+user audit-adapter on >audit-pass ~audit:* +@read +@write +@keyspace -@dangerous
+
+# Read-only monitoring user
+user monitor on >monitor-pass ~* +@read +ping +info -@write -@keyspace -@admin
+
+# Application service users (core services)
+user market-service on >market-service-pass ~market:* ~registry:services:market-* +@read +@write +@keyspace -@dangerous
+user exchange-service on >exchange-service-pass ~exchange:* ~registry:services:exchange-* +@read +@write +@keyspace -@dangerous
+user custodian-service on >custodian-service-pass ~custodian:* ~registry:services:custodian-* +@read +@write +@keyspace -@dangerous
+user risk-service on >risk-service-pass ~risk:* ~registry:services:risk-* +@read +@write +@keyspace -@dangerous
+user trading-service on >trading-service-pass ~trading:* ~registry:services:trading-* +@read +@write +@keyspace -@dangerous
+user test-service on >test-service-pass ~test:* ~registry:services:test-* +@read +@write +@keyspace -@dangerous
+user audit-service on >audit-service-pass ~audit:* ~registry:services:audit-* +@read +@write +@keyspace -@dangerous

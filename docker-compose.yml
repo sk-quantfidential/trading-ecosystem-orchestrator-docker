@@ -1,0 +1,91 @@
+version: "3.8"
+
+# Trading Ecosystem Infrastructure
+# Redis for service discovery and caching + PostgreSQL for persistent storage
+
+networks:
+  trading-ecosystem:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+  postgres-data:
+
+services:
+  # Redis - Service Discovery and Caching
+  redis:
+    image: redis:8-alpine
+    container_name: trading-ecosystem-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.10
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis/users.acl:/usr/local/etc/redis/users.acl:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-u", "redis://healthcheck:health-pass@localhost:6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
+  # PostgreSQL - Persistent Data Storage
+  postgres:
+    image: postgres:17-alpine
+    container_name: trading-ecosystem-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    environment:
+      POSTGRES_DB: trading_ecosystem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres-admin-pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trading_ecosystem"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Service Registry and Configuration
+  service-registry:
+    image: alpine:3.19
+    container_name: trading-ecosystem-registry
+    restart: unless-stopped
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.30
+    volumes:
+      - ./registry:/app
+    working_dir: /app
+    command: ["./registry-service.sh"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
