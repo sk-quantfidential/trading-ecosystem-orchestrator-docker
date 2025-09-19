@@ -35,10 +35,22 @@ This repository provides the foundational infrastructure for the Trading Ecosyst
 ### One-Command Deployment
 ```bash
 # Start all infrastructure services
+./scripts/manage-infrastructure.sh start
+
+# Validate deployment
+./scripts/manage-infrastructure.sh validate
+
+# Stop all services
+./scripts/manage-infrastructure.sh stop
+```
+
+### Alternative: Direct Docker Compose
+```bash
+# Start all infrastructure services
 docker-compose up -d
 
 # Validate deployment
-./validate-infrastructure.sh
+./scripts/validate-infrastructure.sh
 
 # Stop all services
 docker-compose down
@@ -55,6 +67,29 @@ After successful deployment:
 - **PostgreSQL**: postgresql://localhost:5432/trading_ecosystem
 
 ## 🔧 Service Management
+
+### Infrastructure Management Script
+
+For simplified operations, use the infrastructure management utility:
+
+```bash
+# Available commands
+./scripts/manage-infrastructure.sh <command>
+
+# Common operations
+./scripts/manage-infrastructure.sh start      # Start all services
+./scripts/manage-infrastructure.sh stop       # Stop all services (keep volumes)
+./scripts/manage-infrastructure.sh restart    # Restart all services
+./scripts/manage-infrastructure.sh clean      # Complete cleanup (remove volumes)
+./scripts/manage-infrastructure.sh status     # Show service status
+./scripts/manage-infrastructure.sh validate   # Run health validation
+./scripts/manage-infrastructure.sh logs       # Show all logs
+./scripts/manage-infrastructure.sh logs redis # Show specific service logs
+./scripts/manage-infrastructure.sh health     # Quick health check
+./scripts/manage-infrastructure.sh help       # Show help
+```
+
+### Manual Docker Compose Operations
 
 ### Starting Services
 
@@ -98,7 +133,7 @@ docker-compose rm -f redis
 docker-compose ps
 
 # Validate all services are healthy
-./validate-infrastructure.sh
+./scripts/validate-infrastructure.sh
 
 # Check individual service health
 curl http://localhost:8080/health      # Service Registry
@@ -169,7 +204,7 @@ docker stats $(docker-compose ps -q)
 
 ```bash
 # Complete infrastructure validation
-./validate-infrastructure.sh
+./scripts/validate-infrastructure.sh
 
 # Manual health checks
 curl -f http://localhost:8080/health && echo "✅ Service Registry OK"
@@ -222,8 +257,10 @@ docker-compose exec <service> wget --spider http://localhost:<port>/health
 ```
 orchestrator-docker/
 ├── docker-compose.yml           # Main service orchestration
-├── validate-infrastructure.sh   # Deployment validation script
 ├── README.md                    # This file
+├── scripts/
+│   ├── manage-infrastructure.sh     # Infrastructure management utility
+│   └── validate-infrastructure.sh  # Deployment validation script
 ├── redis/
 │   ├── redis.conf              # Redis configuration
 │   └── users.acl               # Redis ACL users
@@ -250,7 +287,8 @@ orchestrator-docker/
 | File | Purpose | Key Features |
 |------|---------|--------------|
 | `docker-compose.yml` | Service orchestration | 7 services, health checks, networking |
-| `validate-infrastructure.sh` | Health validation | Automated testing of all services |
+| `scripts/manage-infrastructure.sh` | Infrastructure utility | Start, stop, validate, logs, status |
+| `scripts/validate-infrastructure.sh` | Health validation | Automated testing of all services |
 | `redis/redis.conf` | Redis configuration | ACL security, performance tuning |
 | `redis/users.acl` | Redis ACL users | Domain-specific access control |
 | `postgres/postgresql.conf` | PostgreSQL config | Performance optimization |
