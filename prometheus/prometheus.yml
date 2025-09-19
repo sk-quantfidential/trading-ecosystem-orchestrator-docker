@@ -1,0 +1,100 @@
+# Prometheus Configuration for Trading Ecosystem Infrastructure
+# Metrics collection for observability and monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'trading-ecosystem'
+    environment: 'development'
+
+# Alertmanager configuration (to be added later)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Load rules once and periodically evaluate them
+rule_files: []
+
+# Scrape configuration
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # Infrastructure services
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['172.20.0.10:6379']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['172.20.0.20:5432']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Service registry health endpoint
+  - job_name: 'service-registry'
+    static_configs:
+      - targets: ['172.20.0.30:8080']
+    scrape_interval: 15s
+    metrics_path: /health
+    scrape_timeout: 5s
+
+  # Future Go services (will be auto-discovered)
+  - job_name: 'go-services'
+    static_configs:
+      - targets: []
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Future Python services (will be auto-discovered)
+  - job_name: 'python-services'
+    static_configs:
+      - targets: []
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['172.20.0.50:3000']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Jaeger metrics
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['172.20.0.60:14269']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # OpenTelemetry Collector metrics
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['172.20.0.70:8888']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention.time: 15d
+    retention.size: 10GB
+    wal-compression: true
+
+# Web configuration
+web:
+  console.templates: /etc/prometheus/consoles
+  console.libraries: /etc/prometheus/console_libraries
+  enable-lifecycle: true
+  enable-admin-api: true
