@@ -16,6 +16,7 @@ volumes:
   prometheus-data:
   grafana-data:
   jaeger-data:
+  otel-data:
 
 services:
   # Redis - Service Discovery and Caching
@@ -198,6 +199,38 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:14269/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # OpenTelemetry Collector - Telemetry Aggregation
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.88.0
+    container_name: trading-ecosystem-otel-collector
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4317:4317"   # OTLP gRPC receiver
+      - "127.0.0.1:4318:4318"   # OTLP HTTP receiver
+      - "127.0.0.1:8888:8888"   # Prometheus metrics endpoint
+      - "127.0.0.1:8889:8889"   # Prometheus exporter endpoint
+      - "127.0.0.1:13133:13133" # Health check endpoint
+      - "127.0.0.1:1777:1777"   # pprof profiling
+      - "127.0.0.1:55679:55679" # zPages debugging
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.70
+    volumes:
+      - otel-data:/tmp
+      - ./otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:13133/"]
       interval: 15s
       timeout: 5s
       retries: 3

@@ -1,0 +1,149 @@
+# OpenTelemetry Collector Configuration for Trading Ecosystem
+# Comprehensive telemetry aggregation and routing
+
+receivers:
+  # OTLP receivers for applications
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Jaeger receiver for legacy applications
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+
+  # Prometheus metrics scraping
+  prometheus:
+    config:
+      global:
+        scrape_interval: 30s
+      scrape_configs:
+        - job_name: 'otel-collector'
+          static_configs:
+            - targets: ['localhost:8888']
+
+  # Host metrics for infrastructure monitoring
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+        metrics:
+          system.disk.io:
+            enabled: true
+      network:
+        metrics:
+          system.network.io:
+            enabled: true
+      load: {}
+      filesystem: {}
+
+processors:
+  # Batch processor for performance
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+
+  # Resource processor to add service info
+  resource:
+    attributes:
+      - key: environment
+        value: development
+        action: upsert
+      - key: cluster
+        value: trading-ecosystem
+        action: upsert
+
+  # Probabilistic sampling for traces
+  probabilistic_sampler:
+    sampling_percentage: 100
+
+exporters:
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    send_timestamps: true
+    metric_expiration: 180m
+    enable_open_metrics: true
+
+  # Jaeger exporter for traces
+  jaeger:
+    endpoint: 172.20.0.60:14250
+    tls:
+      insecure: true
+
+  # Prometheus remote write (for external Prometheus)
+  prometheusremotewrite:
+    endpoint: http://172.20.0.40:9090/api/v1/write
+    tls:
+      insecure: true
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # File exporter for local development
+  file:
+    path: /tmp/otel-data.json
+
+service:
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp, jaeger]
+      processors: [memory_limiter, batch, probabilistic_sampler, resource]
+      exporters: [jaeger, logging]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, hostmetrics]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheus, prometheusremotewrite, logging]
+
+    # Logs pipeline (future use)
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [logging, file]
+
+  extensions: [health_check, pprof, zpages]
+
+extensions:
+  # Health check endpoint
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # Performance profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+  # Memory ballast for stability
+  memory_ballast:
+    size_mib: 64

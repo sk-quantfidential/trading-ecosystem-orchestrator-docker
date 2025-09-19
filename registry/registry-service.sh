@@ -77,6 +77,18 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
     "status" "healthy" \
     "updated_at" "$(date -Iseconds)"
 
+redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "registry:services:otel-collector" \
+    "name" "otel-collector" \
+    "host" "172.20.0.70" \
+    "port" "13133" \
+    "otlp_grpc_port" "4317" \
+    "otlp_http_port" "4318" \
+    "metrics_port" "8888" \
+    "prometheus_port" "8889" \
+    "type" "telemetry" \
+    "status" "healthy" \
+    "updated_at" "$(date -Iseconds)"
+
 # Set service discovery configuration
 redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "config:infrastructure" \
     "redis_host" "172.20.0.10" \
