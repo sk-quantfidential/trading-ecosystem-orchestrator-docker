@@ -64,6 +64,7 @@ processors:
   memory_limiter:
     limit_mib: 256
     spike_limit_mib: 64
+    check_interval: 1s
 
   # Resource processor to add service info
   resource:
@@ -87,9 +88,9 @@ exporters:
     metric_expiration: 180m
     enable_open_metrics: true
 
-  # Jaeger exporter for traces
-  jaeger:
-    endpoint: 172.20.0.60:14250
+  # OTLP exporter for traces to Jaeger
+  otlp/jaeger:
+    endpoint: http://172.20.0.60:14250
     tls:
       insecure: true
 
@@ -105,9 +106,7 @@ exporters:
     sampling_initial: 5
     sampling_thereafter: 200
 
-  # File exporter for local development
-  file:
-    path: /tmp/otel-data.json
+  # File exporter for local development (removed due to permission issues)
 
 service:
   pipelines:
@@ -115,7 +114,7 @@ service:
     traces:
       receivers: [otlp, jaeger]
       processors: [memory_limiter, batch, probabilistic_sampler, resource]
-      exporters: [jaeger, logging]
+      exporters: [otlp/jaeger, logging]
 
     # Metrics pipeline
     metrics:
@@ -127,7 +126,7 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch, resource]
-      exporters: [logging, file]
+      exporters: [logging]
 
   extensions: [health_check, pprof, zpages]
 

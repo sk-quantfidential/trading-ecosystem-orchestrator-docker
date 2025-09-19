@@ -83,18 +83,3 @@ scrape_configs:
       - targets: ['172.20.0.70:8888']
     scrape_interval: 15s
     metrics_path: /metrics
-
-# Storage configuration
-storage:
-  tsdb:
-    path: /prometheus
-    retention.time: 15d
-    retention.size: 10GB
-    wal-compression: true
-
-# Web configuration
-web:
-  console.templates: /etc/prometheus/consoles
-  console.libraries: /etc/prometheus/console_libraries
-  enable-lifecycle: true
-  enable-admin-api: true
