@@ -8,7 +8,7 @@ set -e
 echo "Starting Trading Ecosystem Service Registry..."
 
 # Install required packages
-apk add --no-cache curl jq redis-tools postgresql-client
+apk add --no-cache curl jq redis postgresql-client
 
 # Wait for dependencies
 echo "Waiting for Redis..."
@@ -65,7 +65,7 @@ echo "Service registry configuration completed!"
 cat > /tmp/health-server.sh << 'EOF'
 #!/bin/sh
 while true; do
-    echo -e "HTTP/1.1 200 OK\r\n\r\n{\"status\":\"healthy\",\"timestamp\":\"$(date -Iseconds)\",\"services\":[\"redis\",\"postgres\",\"service-registry\"]}" | nc -l -p 8080 -q 1
+    printf "HTTP/1.1 200 OK\r\n\r\n{\"status\":\"healthy\",\"timestamp\":\"$(date -Iseconds)\",\"services\":[\"redis\",\"postgres\",\"service-registry\"]}" | nc -l -p 8080
 done
 EOF
 
