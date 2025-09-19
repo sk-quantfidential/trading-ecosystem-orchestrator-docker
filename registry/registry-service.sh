@@ -8,7 +8,7 @@ set -e
 echo "Starting Trading Ecosystem Service Registry..."
 
 # Install required packages
-apk add --no-cache curl jq redis postgresql-client
+apk add --no-cache curl jq redis postgresql-client python3
 
 # Wait for dependencies
 echo "Waiting for Redis..."
@@ -100,15 +100,34 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
 
 echo "Service registry configuration completed!"
 
-# Simple HTTP health check server
-cat > /tmp/health-server.sh << 'EOF'
-#!/bin/sh
-while true; do
-    printf "HTTP/1.1 200 OK\r\n\r\n{\"status\":\"healthy\",\"timestamp\":\"$(date -Iseconds)\",\"services\":[\"redis\",\"postgres\",\"service-registry\"]}" | nc -l -p 8080
-done
+# Simple Python HTTP server for health checks
+cat > /tmp/health-server.py << 'EOF'
+#!/usr/bin/env python3
+import json
+import http.server
+import socketserver
+from datetime import datetime
+
+class HealthHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            response = {
+                "status": "healthy",
+                "timestamp": datetime.now().isoformat(),
+                "services": ["redis", "postgres", "service-registry"]
+            }
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+with socketserver.TCPServer(("", 8080), HealthHandler) as httpd:
+    print("Health check server listening on port 8080...")
+    httpd.serve_forever()
 EOF
 
-chmod +x /tmp/health-server.sh
-
 echo "Starting health check server on port 8080..."
-exec /tmp/health-server.sh
+exec python3 /tmp/health-server.py

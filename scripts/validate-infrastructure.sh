@@ -16,12 +16,34 @@ check_service_health() {
     local description=$3
 
     echo -n "Checking $description... "
-    if curl -s "$health_url" > /dev/null 2>&1; then
-        echo "✅ HEALTHY"
-        return 0
+
+    # Special case for Redis
+    if [ "$service_name" = "redis" ]; then
+        if docker compose exec -T redis redis-cli --no-auth-warning -u "redis://healthcheck:health-pass@localhost:6379" ping > /dev/null 2>&1; then
+            echo "✅ HEALTHY"
+            return 0
+        else
+            echo "❌ UNHEALTHY"
+            return 1
+        fi
+    # Special case for PostgreSQL
+    elif [ "$service_name" = "postgres" ]; then
+        if docker compose exec -T postgres pg_isready -U postgres -d trading_ecosystem > /dev/null 2>&1; then
+            echo "✅ HEALTHY"
+            return 0
+        else
+            echo "❌ UNHEALTHY"
+            return 1
+        fi
+    # HTTP-based health checks
     else
-        echo "❌ UNHEALTHY"
-        return 1
+        if curl -s "$health_url" > /dev/null 2>&1; then
+            echo "✅ HEALTHY"
+            return 0
+        else
+            echo "❌ UNHEALTHY"
+            return 1
+        fi
     fi
 }
 
@@ -93,12 +115,8 @@ echo
 echo "4. SERVICE DISCOVERY VALIDATION"
 echo "==============================="
 echo "Checking Redis service registry..."
-if command -v redis-cli >/dev/null 2>&1; then
-    echo "Registered services:"
-    redis-cli -h 127.0.0.1 -p 6379 --no-auth-warning -u "redis://healthcheck:health-pass@127.0.0.1:6379" KEYS "registry:services:*" || echo "Could not fetch service registry keys"
-else
-    echo "⚠️  redis-cli not available for service discovery validation"
-fi
+echo "Registered services:"
+docker compose exec -T redis redis-cli --no-auth-warning -u "redis://registry:registry-pass@localhost:6379" KEYS "registry:services:*" || echo "Could not fetch service registry keys"
 echo
 
 echo "5. ACCESS POINTS SUMMARY"
