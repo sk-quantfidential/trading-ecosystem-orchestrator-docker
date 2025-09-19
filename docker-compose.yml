@@ -15,6 +15,7 @@ volumes:
   postgres-data:
   prometheus-data:
   grafana-data:
+  jaeger-data:
 
 services:
   # Redis - Service Discovery and Caching
@@ -157,6 +158,46 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.51.0
+    container_name: trading-ecosystem-jaeger
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:16686:16686"  # Jaeger UI
+      - "127.0.0.1:14268:14268"  # HTTP collector
+      - "127.0.0.1:14269:14269"  # HTTP admin/metrics
+      - "127.0.0.1:14250:14250"  # gRPC collector
+      - "127.0.0.1:6831:6831/udp"  # UDP jaeger-agent
+      - "127.0.0.1:6832:6832/udp"  # UDP jaeger-agent
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.60
+    volumes:
+      - jaeger-data:/tmp
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://172.20.0.40:9090
+      - PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR=true
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=50000
+      - LOG_LEVEL=info
+    command:
+      - "--memory.max-traces=50000"
+      - "--query.base-path=/"
+      - "--admin.http.host-port=:14269"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:14269/"]
       interval: 15s
       timeout: 5s
       retries: 3

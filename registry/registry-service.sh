@@ -66,6 +66,17 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
     "status" "healthy" \
     "updated_at" "$(date -Iseconds)"
 
+redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "registry:services:jaeger" \
+    "name" "jaeger" \
+    "host" "172.20.0.60" \
+    "port" "16686" \
+    "collector_port" "14268" \
+    "grpc_port" "14250" \
+    "admin_port" "14269" \
+    "type" "tracing" \
+    "status" "healthy" \
+    "updated_at" "$(date -Iseconds)"
+
 # Set service discovery configuration
 redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "config:infrastructure" \
     "redis_host" "172.20.0.10" \
