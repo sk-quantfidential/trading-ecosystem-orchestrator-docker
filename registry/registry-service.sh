@@ -58,6 +58,14 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
     "status" "healthy" \
     "updated_at" "$(date -Iseconds)"
 
+redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "registry:services:grafana" \
+    "name" "grafana" \
+    "host" "172.20.0.50" \
+    "port" "3000" \
+    "type" "dashboard" \
+    "status" "healthy" \
+    "updated_at" "$(date -Iseconds)"
+
 # Set service discovery configuration
 redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "config:infrastructure" \
     "redis_host" "172.20.0.10" \
