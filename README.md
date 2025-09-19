@@ -1,57 +1,58 @@
-# Trading Ecosystem Orchestrator
+# Trading Ecosystem - Core Infrastructure
 
-Docker Compose orchestration for the complete trading ecosystem simulation with production-like risk monitoring, chaos engineering, and comprehensive auditability.
+This directory contains the complete infrastructure deployment for the Trading Ecosystem, implementing **TSE-0001.3a: Core Infrastructure Setup** with enhanced observability capabilities.
 
 ## 🎯 Overview
 
-This repository contains the Docker Compose orchestration and deployment configuration for the entire trading ecosystem simulation. It brings together all microservices into a cohesive system that can be deployed with a single command while maintaining clean network separation and realistic operational constraints.
+This repository provides the foundational infrastructure for the Trading Ecosystem, establishing shared data services and a comprehensive observability stack. All future microservices will connect to this infrastructure for service discovery, data persistence, and telemetry.
 
-### System Components
+### Infrastructure Components
+- **Redis**: Service discovery, caching, and real-time data storage
+- **PostgreSQL**: Persistent data storage with domain-specific schemas
+- **Service Registry**: Lightweight service discovery and configuration API
+- **Prometheus**: Metrics collection and monitoring
+- **Grafana**: Visualization dashboards and alerting
+- **Jaeger**: Distributed tracing and performance monitoring
+- **OpenTelemetry Collector**: Telemetry aggregation and routing
+
+### Future Services (TSE-0001.3b+)
 - **Exchange Simulator** (Go): Crypto exchange with order matching and chaos injection
-- **Custodian Simulator** (Go): Settlement and custody operations with multi-day cycles  
+- **Custodian Simulator** (Go): Settlement and custody operations with multi-day cycles
 - **Market Data Simulator** (Go): Real market data feeds with controlled price manipulation
 - **Trading Strategy Engine** (Python): Algorithmic trading with misbehaving strategy chaos testing
 - **Risk Monitor** (Python): Production-authentic risk surveillance and compliance alerting
 - **Test Coordinator** (Python): Chaos scenario orchestration and validation framework
 - **Audit Correlator** (Go): Independent system validation and event correlation
-- **Observability Stack**: Prometheus, Grafana, OpenTelemetry, PostgreSQL, Redis
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker 28.4+
+- Docker 24.0+
 - Docker Compose 2.8+
-- 8GB RAM minimum (16GB recommended)
-- Available ports: 8080-8085, 3000, 9090, 16686
+- 4GB RAM minimum (8GB recommended for full observability stack)
+- Available ports: 3000, 5432, 6379, 8080, 9090, 16686, 4317, 4318
 
 ### One-Command Deployment
 ```bash
-# Clone the orchestration repository
-git clone <this-repo-url>
-cd trading-ecosystem-orchestrator-docker
+# Start all infrastructure services
+docker-compose up -d
 
-# Copy environment configuration
-cp .env.example .env.dev
+# Validate deployment
+./validate-infrastructure.sh
 
-# Edit API keys and configuration (optional for basic testing)
-nano .env.dev
-
-# Deploy the complete ecosystem
-./scripts/deploy.sh dev
-
-# Verify deployment
-./scripts/health-check.sh
+# Stop all services
+docker-compose down
 ```
 
 ### Access Points
 After successful deployment:
-- **Risk Dashboard**: http://localhost:8084 (Risk Monitor web interface)
+- **Service Registry Health**: http://localhost:8080/health
 - **Grafana Dashboards**: http://localhost:3000 (admin/admin)
 - **Prometheus Metrics**: http://localhost:9090
 - **Jaeger Tracing**: http://localhost:16686
-- **Exchange API**: http://localhost:8080
-- **Custodian API**: http://localhost:8081
-- **Market Data API**: http://localhost:8082
+- **OpenTelemetry Collector**: http://localhost:13133
+- **Redis**: redis://localhost:6379
+- **PostgreSQL**: postgresql://localhost:5432/trading_ecosystem
 
 ## 📁 Repository Structure
 
