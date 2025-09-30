@@ -8,7 +8,7 @@ user custodian-adapter on >custodian-pass ~custodian:* +@read +@write +@keyspace
 user risk-adapter on >risk-pass ~risk:* +@read +@write +@keyspace -@dangerous
 user trading-adapter on >trading-pass ~trading:* +@read +@write +@keyspace -@dangerous
 user test-adapter on >test-pass ~test:* +@read +@write +@keyspace -@dangerous
-user audit-adapter on >audit-pass ~audit:* +@read +@write +@keyspace -@dangerous
+user audit-adapter on >audit-pass ~audit:* +@read +@write +@keyspace +ping -@dangerous
 user monitor on >monitor-pass ~* +@read +ping +info -@write -@keyspace -@admin
 user market-service on >market-service-pass ~market:* ~registry:services:market-* +@read +@write +@keyspace -@dangerous
 user exchange-service on >exchange-service-pass ~exchange:* ~registry:services:exchange-* +@read +@write +@keyspace -@dangerous

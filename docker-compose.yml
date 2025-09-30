@@ -235,3 +235,58 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  # Audit Correlator - Audit Event Management and Correlation
+  audit-correlator:
+    build:
+      context: ..
+      dockerfile: audit-correlator-go/Dockerfile
+    image: audit-correlator:latest
+    container_name: trading-ecosystem-audit-correlator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8083:8083"  # HTTP port
+      - "127.0.0.1:9093:9093"  # gRPC port
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.80
+    environment:
+      # Service Identity
+      - SERVICE_NAME=audit-correlator
+      - SERVICE_VERSION=1.0.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HTTP_PORT=8083
+      - GRPC_PORT=9093
+
+      # Database Configuration
+      - POSTGRES_URL=postgres://audit_adapter:audit-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
+      - REDIS_URL=redis://audit-adapter:audit-pass@172.20.0.10:6379/0
+      - MONGO_URL=mongodb://172.20.0.20:27017/audit_correlator
+
+      # Configuration
+      - MAX_CONNECTIONS=25
+      - MAX_IDLE_CONNECTIONS=10
+      - CONNECTION_TIMEOUT=30s
+      - IDLE_TIMEOUT=10m
+      - MAX_RETRIES=3
+      - RETRY_INTERVAL=5s
+      - DEFAULT_TTL=1h
+      - HEALTH_CHECK_INTERVAL=15s
+
+      # Logging
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
