@@ -89,6 +89,25 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
     "status" "healthy" \
     "updated_at" "$(date -Iseconds)"
 
+# Application services
+redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "registry:services:audit-correlator" \
+    "name" "audit-correlator" \
+    "host" "172.20.0.80" \
+    "http_port" "8083" \
+    "grpc_port" "9093" \
+    "type" "service" \
+    "status" "healthy" \
+    "updated_at" "$(date -Iseconds)"
+
+redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "registry:services:custodian-simulator" \
+    "name" "custodian-simulator" \
+    "host" "172.20.0.81" \
+    "http_port" "8084" \
+    "grpc_port" "9094" \
+    "type" "service" \
+    "status" "healthy" \
+    "updated_at" "$(date -Iseconds)"
+
 # Set service discovery configuration
 redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry-pass@172.20.0.10:6379" HSET "config:infrastructure" \
     "redis_host" "172.20.0.10" \

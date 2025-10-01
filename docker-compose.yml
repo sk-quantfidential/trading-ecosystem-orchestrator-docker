@@ -88,11 +88,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "sh", "-c", "sleep 2 && wget --quiet --tries=1 --spider http://127.0.0.1:8080/health"]
       interval: 15s
-      timeout: 5s
+      timeout: 10s
       retries: 3
-      start_period: 45s
+      start_period: 60s
 
   # Prometheus - Metrics Collection and Monitoring
   prometheus:
@@ -285,7 +285,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8083/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -350,7 +350,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8084/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
