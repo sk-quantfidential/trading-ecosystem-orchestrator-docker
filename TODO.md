@@ -837,25 +837,86 @@ Document in this TODO.md:
 
 **Data Adapters & Orchestrator Integration**:
 - ✅ audit-correlator-go: Complete (25%)
-- ⏳ custodian-simulator-go: Pending (orchestrator tasks ready)
-- ⏳ exchange-simulator-go: Pending
+- ✅ custodian-simulator-go: Complete (deployed and validated)
+- ✅ exchange-simulator-go: Complete (deployed and validated)
 - ⏳ market-data-simulator-go: Pending
 
 **Orchestrator Infrastructure Status**:
 - ✅ audit schema and user: Complete
-- ⏳ custodian schema and user: Ready for creation
-- ⏳ exchange schema and user: Ready for creation
+- ✅ custodian schema and user: Complete (3 tables)
+- ✅ exchange schema and user: Complete (4 tables)
 - ⏳ market_data schema and user: Pending
 
 ---
 
-## 🏗️ Milestone TSE-0001.4: exchange-simulator-go Integration Tasks
+## 🏗️ Milestone TSE-0001.4.2: exchange-simulator-go Integration
 
-**Status**: 📝 **PENDING** - Ready to Start
+**Status**: ✅ **COMPLETE** - Deployed and Validated
 **Goal**: Deploy exchange-simulator-go with exchange-data-adapter-go integration
-**Dependencies**: audit-correlator-go integration complete ✅, custodian-simulator-go tasks ready ✅, exchange-data-adapter-go created
+**Dependencies**: audit-correlator-go integration complete ✅, custodian-simulator-go complete ✅, exchange-data-adapter-go created ✅
 **Pattern**: Following audit-correlator-go and custodian-simulator-go proven deployment approach
-**Estimated Time**: 2-3 hours (infrastructure setup only)
+**Completed**: 2025-10-01
+
+---
+
+## ✅ Exchange-Simulator Deployment Summary
+
+**Deployed**: 2025-10-01
+**Container**: trading-ecosystem-exchange-simulator
+**Network IP**: 172.20.0.82
+**Ports**: 8082 (HTTP), 9092 (gRPC)
+**Database User**: exchange_adapter
+**Redis User**: exchange-adapter
+**Status**: ✅ Running and healthy
+
+**Infrastructure Created**:
+- ✅ PostgreSQL schema: exchange (4 tables - accounts, orders, trades, balances)
+- ✅ PostgreSQL user: exchange_adapter with full permissions
+- ✅ Redis ACL user: exchange-adapter with exchange:* namespace
+- ✅ docker-compose service definition (172.20.0.82)
+- ✅ Multi-context Dockerfile (parent directory build)
+- ✅ Service registry entry
+
+**Validation Results**:
+- ✅ Health check: Passing (http://localhost:8082/api/v1/health)
+- ✅ PostgreSQL: Connected to exchange schema (4 tables verified)
+- ✅ Redis: Cache operations operational (Set/Get/Delete verified)
+- ✅ HTTP endpoint: {"service":"exchange-simulator","status":"healthy","version":"1.0.0"}
+- ✅ gRPC endpoint: Port 9092 operational
+- ✅ DataAdapter: Integrated successfully (config layer + smoke tests)
+- ✅ Smoke tests: 5/5 passing (config + cache), 4 deferred to future epic
+- ✅ Docker image: Built and deployed successfully
+
+**Test Coverage** (Phase 8 Smoke Tests):
+- ✅ Config Tests: 3/3 passing (Load, GetDataAdapter, graceful degradation)
+- ✅ DataAdapter Tests: 2/2 passing (initialization, cache operations)
+- ⏭️ Account/Order/Balance CRUD: Deferred (UUID generation enhancement needed)
+- ⏭️ Service Discovery: Deferred (Redis ACL permissions needed)
+
+**Commits**:
+- orchestrator-docker: Phase 7 (PostgreSQL schema + docker-compose service)
+- exchange-simulator-go: Phase 5 (DataAdapter integration), Phase 8 (smoke tests)
+- exchange-data-adapter-go: Phase 1-4 (foundation, implementations, docs)
+
+**Pull Requests**:
+- `./exchange-simulator-go/docs/prs/PULL_REQUEST.md` (Phase 5-8 documentation)
+- `./exchange-data-adapter-go/docs/prs/PULL_REQUEST.md` (Phase 1-4 foundation)
+
+**Future Work** (Deferred to Next Epic):
+- Comprehensive BDD tests (~2000-3000 LOC, 8 test suites, 50+ scenarios)
+- UUID generation enhancement in repository Create methods
+- Redis ACL enhancement (keys, scan, ping commands)
+- Full CRUD cycle tests for all domain repositories
+
+---
+
+## 🏗️ Milestone TSE-0001.4.2: exchange-simulator-go Integration Tasks (COMPLETED ✅)
+
+**Status**: ✅ **COMPLETE** - All Tasks Finished
+**Goal**: Deploy exchange-simulator-go with exchange-data-adapter-go integration
+**Dependencies**: audit-correlator-go integration complete ✅, custodian-simulator-go complete ✅, exchange-data-adapter-go created ✅
+**Pattern**: Successfully followed audit-correlator-go and custodian-simulator-go proven deployment approach
+**Total Time**: 9 phases completed over 2 days
 
 ### Task 1: PostgreSQL Schema Setup for Exchange Domain
 **Goal**: Create exchange schema and tables in trading_ecosystem database
