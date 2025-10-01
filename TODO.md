@@ -266,11 +266,48 @@ audit-correlator:
 
 ## 🏗️ Milestone TSE-0001.4: custodian-simulator-go Integration Tasks
 
-**Status**: 📝 **PENDING** - Ready to Start
+**Status**: ✅ **COMPLETE** - Deployed and Validated
 **Goal**: Deploy custodian-simulator-go with custodian-data-adapter-go integration
-**Dependencies**: audit-correlator-go integration complete ✅, custodian-data-adapter-go created
+**Dependencies**: audit-correlator-go integration complete ✅, custodian-data-adapter-go created ✅
 **Pattern**: Following audit-correlator-go proven deployment approach
-**Estimated Time**: 2-3 hours (infrastructure setup only)
+**Completed**: 2025-10-01
+
+---
+
+## ✅ Custodian-Simulator Deployment Summary
+
+**Deployed**: 2025-10-01
+**Container**: trading-ecosystem-custodian-simulator
+**Network IP**: 172.20.0.81
+**Ports**: 8084 (HTTP), 9094 (gRPC)
+**Database User**: custodian_adapter
+**Redis User**: custodian-adapter
+**Status**: ✅ Running and healthy
+
+**Infrastructure Created**:
+- ✅ PostgreSQL schema: custodian (3 tables - positions, settlements, balances)
+- ✅ PostgreSQL user: custodian_adapter with full permissions
+- ✅ Redis ACL user: custodian-adapter with custodian:* namespace
+- ✅ docker-compose service definition
+- ✅ Service registry entry
+
+**Validation Results**:
+- ✅ Health check: Passing (http://localhost:8084/api/v1/health)
+- ✅ PostgreSQL: Connected to custodian schema (verified with CRUD operations)
+- ✅ Redis: Service discovery operational (PING, SET, GET, DEL verified)
+- ✅ HTTP endpoint: {"service":"custodian-simulator","status":"healthy","version":"1.0.0"}
+- ✅ gRPC endpoint: Port 9094 operational
+- ✅ DataAdapter: Integrated successfully (logs: "Data adapter initialized successfully")
+- ✅ Service registered: registry:services:custodian-simulator in Redis
+
+**Commits**:
+- orchestrator-docker b5139b3: PostgreSQL schema + Redis ACL
+- orchestrator-docker 3cc8527: docker-compose service definition
+- orchestrator-docker b5360fb: Health checks and service registry fixes
+
+**Pull Request**: `./custodian-simulator-go/docs/prs/refactor-epic-TSE-0001.4-data-adapters-and-orchestrator.md`
+
+---
 
 ### Task 1: PostgreSQL Schema Setup for Custodian Domain
 **Goal**: Create custodian schema and tables in trading_ecosystem database
