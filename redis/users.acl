@@ -5,7 +5,7 @@ user registry on >registry-pass ~registry:* ~config:* +@read +@write +@keyspace 
 user market-adapter on >market-pass ~market:* +@read +@write +@keyspace -@dangerous
 user exchange-adapter on >exchange-pass ~exchange:* +@read +@write +@keyspace -@dangerous
 user custodian-adapter on >custodian-pass ~custodian:* +@read +@write +@keyspace +ping -@dangerous
-user risk-adapter on >risk-pass ~risk:* +@read +@write +@keyspace -@dangerous
+user risk-adapter on >risk-pass ~risk:* +@read +@write +@keyspace +ping -@dangerous
 user trading-adapter on >trading-pass ~trading:* +@read +@write +@keyspace -@dangerous
 user test-adapter on >test-pass ~test:* +@read +@write +@keyspace -@dangerous
 user audit-adapter on >audit-pass ~audit:* +@read +@write +@keyspace +ping -@dangerous
