@@ -1,6 +1,75 @@
-# orchestrator-docker - TSE-0001.3a Core Infrastructure Setup
+# orchestrator-docker - Component TODO
 
-## Milestone: TSE-0001.3a - Core Infrastructure Setup
+## Current Milestone: TSE-0001.12.0 - Multi-Instance Infrastructure Foundation
+**Status**: ✅ **COMPLETED** (2025-10-07)
+**Goal**: Enable multi-instance deployment with named components for Grafana monitoring
+**Components**: orchestrator-docker, audit-data-adapter-go, audit-correlator-go, project-plan
+**Dependencies**: TSE-0001.4 (Data Adapters & Orchestrator Refactoring) ✅
+
+### 🎯 BDD Acceptance Criteria
+> Services support multi-instance deployment with separate PostgreSQL schemas and Redis namespaces, enabling instance-aware Grafana monitoring
+
+### ✅ Completed Tasks (orchestrator-docker)
+
+#### Phase 5: Docker Deployment Configuration
+- [x] Added SERVICE_INSTANCE_NAME environment variable to audit-correlator service
+- [x] Added Docker volume mappings for data and logs directories
+  - [x] `./volumes/audit-correlator/data:/app/data`
+  - [x] `./volumes/audit-correlator/logs:/app/logs`
+- [x] Created `scripts/init-volumes.sh` for automated volume initialization
+- [x] Pre-configured for singleton services (audit-correlator, test-coordinator)
+- [x] Pre-configured for multi-instance services (exchange-OKX, custodian-Komainu, etc.)
+- [x] Executable permissions on init script
+
+#### Phase 6: PostgreSQL Schema Initialization
+- [x] Created "audit" schema for singleton audit-correlator instance
+- [x] Maintained "audit_correlator" schema for backward compatibility
+- [x] Added automated migration from public schema to audit schema
+- [x] Created complete table structure in both schemas:
+  - [x] audit_events table with indexes
+  - [x] service_registrations table for service discovery
+  - [x] audit_correlations table for event correlations
+  - [x] service_metrics table for performance tracking
+- [x] Configured permissions for audit_adapter user
+- [x] Configured permissions for monitor_user
+- [x] Created trigger functions for updated_at columns
+- [x] Updated health_check() function to include both schemas
+
+#### Phase 8: Grafana Dashboards
+- [x] Created `grafana/dashboards/` directory structure
+- [x] Comprehensive README.md with dashboard setup guide
+- [x] Documented two dashboard views:
+  - [x] Docker Infrastructure View (all containers as infrastructure)
+  - [x] Simulation Entity View (trading entities as business components)
+- [x] Prometheus scrape configuration examples
+- [x] PromQL queries for instance-aware monitoring
+- [x] Variable templates for dynamic filtering
+- [x] Manual dashboard creation instructions
+- [x] Health check integration documentation
+
+### 📝 Files Modified/Created
+- **Modified**: `docker-compose.yml` (audit-correlator service config)
+- **Modified**: `postgres/init/02-audit-correlator-schema.sql` (multi-instance schema support)
+- **Created**: `scripts/init-volumes.sh` (volume initialization automation)
+- **Created**: `grafana/dashboards/README.md` (comprehensive dashboard guide)
+
+### 🚀 Feature Branch
+- Branch: `feature/TSE-0001.12.0-named-components-foundation`
+- Commits: 3
+  - Phase 5: Docker deployment configuration
+  - Phase 6: PostgreSQL schema initialization
+  - Phase 8: Grafana dashboards
+
+### 📊 Related Milestones
+- **Cross-Component**: TSE-0001.12.0 involves 4 repositories
+  - audit-data-adapter-go: Phases 0, 3, 4
+  - audit-correlator-go: Phases 1, 2, 7
+  - orchestrator-docker: Phases 5, 6, 8
+  - project-plan: Documentation
+
+---
+
+## Previous Milestone: TSE-0001.3a - Core Infrastructure Setup
 **Status**: Validation Required
 **Goal**: Establish shared data infrastructure and service discovery
 **Components**: Infrastructure
