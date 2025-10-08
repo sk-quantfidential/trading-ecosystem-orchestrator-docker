@@ -495,3 +495,78 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
+
+  # ============================================================================
+  # Trading System Engine - Systematic Trading Service
+  # ============================================================================
+  trading-system-engine:
+    build:
+      context: ..
+      dockerfile: trading-system-engine-py/Dockerfile
+    image: trading-system-engine:latest
+    container_name: trading-ecosystem-trading-system-engine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8083:8083"  # HTTP port (changed from 8082 to avoid conflict with exchange)
+      - "127.0.0.1:50053:50053"  # gRPC port (changed from 50052)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.86
+    volumes:
+      - ./volumes/trading-system-engine/data:/app/data
+      - ./volumes/trading-system-engine/logs:/app/logs
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=trading-system-engine
+      - SERVICE_INSTANCE_NAME=trading-system-engine  # Singleton instance
+      - SERVICE_VERSION=0.1.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8083
+      - GRPC_PORT=50053
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://trading-adapter:trading-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Trading Data Adapter Configuration
+      - TRADING_ADAPTER_SERVICE_NAME=trading-system-engine
+      - TRADING_ADAPTER_SERVICE_INSTANCE_NAME=trading-system-engine
+      - TRADING_ADAPTER_ENVIRONMENT=docker
+      - TRADING_ADAPTER_POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - TRADING_ADAPTER_REDIS_URL=redis://trading-adapter:trading-pass@172.20.0.10:6379/0
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=trading-system-engine
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+
+      # Trading Engine Settings
+      - MAX_POSITION_SIZE=1000000.0
+      - RISK_LIMIT_THRESHOLD=500000.0
+      - ORDER_TIMEOUT_SECONDS=30
+      - STRATEGY_COOLDOWN_SECONDS=60
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8083/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

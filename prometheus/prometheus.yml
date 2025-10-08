@@ -98,6 +98,19 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 5s
 
+  # Trading System Engine - Singleton Python Service (TSE-0001.12.0)
+  - job_name: 'trading-system-engine'
+    static_configs:
+      - targets: ['172.20.0.86:8083']
+        labels:
+          service: 'trading-system-engine'
+          instance_name: 'trading-system-engine'
+          service_type: 'singleton'
+          environment: 'docker'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Future Go services (will be auto-discovered)
   - job_name: 'go-services'
     static_configs:
