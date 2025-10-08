@@ -309,9 +309,13 @@ services:
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
+    volumes:
+      - ./volumes/custodian-simulator/data:/app/data
+      - ./volumes/custodian-simulator/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=custodian-simulator
+      - SERVICE_INSTANCE_NAME=custodian-simulator  # Singleton instance
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 

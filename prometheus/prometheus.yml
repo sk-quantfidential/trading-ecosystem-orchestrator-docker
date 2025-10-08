@@ -61,6 +61,18 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 5s
 
+  # Custodian Simulator - Singleton Service (TSE-0001.12.0)
+  - job_name: 'custodian-simulator'
+    static_configs:
+      - targets: ['172.20.0.81:8084']
+        labels:
+          service: 'custodian-simulator'
+          instance_name: 'custodian-simulator'
+          service_type: 'singleton'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Future Go services (will be auto-discovered)
   - job_name: 'go-services'
     static_configs:
