@@ -380,6 +380,7 @@ services:
     environment:
       # Service Identity
       - SERVICE_NAME=exchange-simulator
+      - SERVICE_INSTANCE_NAME=exchange-simulator
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 

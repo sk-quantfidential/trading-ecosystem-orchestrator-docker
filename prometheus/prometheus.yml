@@ -73,6 +73,18 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 5s
 
+  # Exchange Simulator - Singleton Service (TSE-0001.12.0)
+  - job_name: 'exchange-simulator'
+    static_configs:
+      - targets: ['172.20.0.82:8082']
+        labels:
+          service: 'exchange-simulator'
+          instance_name: 'exchange-simulator'
+          service_type: 'singleton'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Risk Monitor - Singleton Python Service (TSE-0001.12.0)
   - job_name: 'risk-monitor'
     static_configs:
