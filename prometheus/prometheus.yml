@@ -49,6 +49,18 @@ scrape_configs:
     metrics_path: /health
     scrape_timeout: 5s
 
+  # Audit Correlator - Singleton Service (TSE-0001.12.0)
+  - job_name: 'audit-correlator'
+    static_configs:
+      - targets: ['172.20.0.80:8083']
+        labels:
+          service: 'audit-correlator'
+          instance_name: 'audit-correlator'
+          service_type: 'singleton'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Future Go services (will be auto-discovered)
   - job_name: 'go-services'
     static_configs:
