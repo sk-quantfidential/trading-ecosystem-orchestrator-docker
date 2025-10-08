@@ -427,3 +427,70 @@ services:
       timeout: 5s
       retries: 3
       start_period: 45s
+
+  # Risk Monitor - Production-like Risk Monitoring
+  risk-monitor:
+    build:
+      context: ..
+      dockerfile: risk-monitor-py/Dockerfile
+    image: risk-monitor:latest
+    container_name: trading-ecosystem-risk-monitor
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8084:8084"  # HTTP port
+      - "127.0.0.1:50054:50054"  # gRPC port
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.85
+    volumes:
+      - ./volumes/risk-monitor/data:/app/data
+      - ./volumes/risk-monitor/logs:/app/logs
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=risk-monitor
+      - SERVICE_INSTANCE_NAME=risk-monitor  # Singleton instance
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8084
+      - GRPC_PORT=50054
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://risk-adapter:risk-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - SERVICE_VERSION=0.1.0
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Risk Data Adapter Configuration
+      - RISK_ADAPTER_SERVICE_NAME=risk-monitor
+      - RISK_ADAPTER_SERVICE_INSTANCE_NAME=risk-monitor
+      - RISK_ADAPTER_ENVIRONMENT=docker
+      - RISK_ADAPTER_POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - RISK_ADAPTER_REDIS_URL=redis://risk-adapter:risk-pass@172.20.0.10:6379/0
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=risk-monitor
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8084/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
