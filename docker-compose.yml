@@ -245,8 +245,8 @@ services:
     container_name: trading-ecosystem-audit-correlator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8083:8083"  # HTTP port
-      - "127.0.0.1:9093:9093"  # gRPC port
+      - "127.0.0.1:8083:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:9093:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.80
@@ -261,8 +261,8 @@ services:
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8083
-      - GRPC_PORT=9093
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration
       - POSTGRES_URL=postgres://audit_adapter:audit-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -289,7 +289,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8083/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -304,8 +304,8 @@ services:
     container_name: trading-ecosystem-custodian-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8084"  # HTTP port
-      - "127.0.0.1:9094:9094"  # gRPC port
+      - "127.0.0.1:8084:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:9094:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
@@ -320,8 +320,8 @@ services:
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8084
-      - GRPC_PORT=9094
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration (custodian_adapter user)
       - POSTGRES_URL=postgres://custodian_adapter:custodian-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -358,7 +358,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8084/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -372,8 +372,8 @@ services:
     container_name: trading-ecosystem-exchange-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8082:8082"  # HTTP port
-      - "127.0.0.1:9092:9092"  # gRPC port
+      - "127.0.0.1:8082:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:9092:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
@@ -385,8 +385,8 @@ services:
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8082
-      - GRPC_PORT=9092
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration (exchange_adapter user)
       - POSTGRES_URL=postgres://exchange_adapter:exchange-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -423,7 +423,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8082/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
