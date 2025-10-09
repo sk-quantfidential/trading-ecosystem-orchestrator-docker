@@ -85,6 +85,18 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 5s
 
+  # Market Data Simulator - Singleton Service (TSE-0001.12.0)
+  - job_name: 'market-data-simulator'
+    static_configs:
+      - targets: ['172.20.0.84:8080']
+        labels:
+          service: 'market-data-simulator'
+          instance_name: 'market-data-simulator'
+          service_type: 'singleton'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Risk Monitor - Singleton Python Service (TSE-0001.12.0)
   - job_name: 'risk-monitor'
     static_configs:
