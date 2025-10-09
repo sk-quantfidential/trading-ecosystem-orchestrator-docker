@@ -111,6 +111,19 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 5s
 
+  # Test Coordinator - Singleton Python Service (TSE-0001.12.0)
+  - job_name: 'test-coordinator'
+    static_configs:
+      - targets: ['172.20.0.87:8087']
+        labels:
+          service: 'test-coordinator'
+          instance_name: 'test-coordinator'
+          service_type: 'singleton'
+          environment: 'docker'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
   # Future Go services (will be auto-discovered)
   - job_name: 'go-services'
     static_configs:

@@ -438,8 +438,8 @@ services:
     container_name: trading-ecosystem-risk-monitor
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8084"  # HTTP port
-      - "127.0.0.1:50054:50054"  # gRPC port
+      - "127.0.0.1:8085:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50054:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.85
@@ -454,8 +454,8 @@ services:
 
       # Network Configuration
       - HOST=0.0.0.0
-      - HTTP_PORT=8084
-      - GRPC_PORT=50054
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration
       - POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
@@ -490,7 +490,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8084/api/v1/health')"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -507,8 +507,8 @@ services:
     container_name: trading-ecosystem-trading-system-engine
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8083:8083"  # HTTP port (changed from 8082 to avoid conflict with exchange)
-      - "127.0.0.1:50053:50053"  # gRPC port (changed from 50052)
+      - "127.0.0.1:8086:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50053:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.86
@@ -524,8 +524,8 @@ services:
 
       # Network Configuration
       - HOST=0.0.0.0
-      - HTTP_PORT=8083
-      - GRPC_PORT=50053
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration
       - POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
@@ -565,7 +565,85 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8083/api/v1/health')"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ============================================================================
+  # Test Coordinator - Scenario Orchestration and Chaos Testing
+  # ============================================================================
+  test-coordinator:
+    build:
+      context: ..
+      dockerfile: test-coordinator-py/Dockerfile
+    image: test-coordinator:latest
+    container_name: trading-ecosystem-test-coordinator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8087:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50055:50051"  # gRPC port (external:internal)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.87
+    volumes:
+      - ./volumes/test-coordinator/data:/app/data
+      - ./volumes/test-coordinator/logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for container orchestration
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=test-coordinator
+      - SERVICE_INSTANCE_NAME=test-coordinator  # Singleton instance
+      - SERVICE_VERSION=0.1.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://test_coordinator_adapter:test-coordinator-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://test-coordinator-adapter:test-coordinator-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Test Coordinator Data Adapter Configuration
+      - TEST_COORDINATOR_ADAPTER_SERVICE_NAME=test-coordinator
+      - TEST_COORDINATOR_ADAPTER_SERVICE_INSTANCE_NAME=test-coordinator
+      - TEST_COORDINATOR_ADAPTER_ENVIRONMENT=docker
+      - TEST_COORDINATOR_ADAPTER_POSTGRES_URL=postgresql+asyncpg://test_coordinator_adapter:test-coordinator-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - TEST_COORDINATOR_ADAPTER_REDIS_URL=redis://test-coordinator-adapter:test-coordinator-pass@172.20.0.10:6379/0
+
+      # Docker Configuration
+      - DOCKER_SOCKET=unix:///var/run/docker.sock
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=test-coordinator
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+
+      # Test Coordination Settings
+      - SCENARIO_TIMEOUT_SECONDS=3600
+      - CHAOS_INJECTION_ENABLED=true
+      - SCENARIO_RESULTS_RETENTION_DAYS=7
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
