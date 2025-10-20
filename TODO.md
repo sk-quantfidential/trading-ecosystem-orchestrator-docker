@@ -283,7 +283,7 @@ Both can proceed in parallel with the completed infrastructure foundation
 - [x] **docker-compose.yml Integration** - Added build context and service definition
 - [x] **Service Configuration** - Environment variables for PostgreSQL, Redis, and service identity
 - [x] **Container Deployment** - Successfully running in trading-ecosystem network (172.20.0.80)
-- [x] **Health Checks** - HTTP and gRPC servers responding (8083, 9093)
+- [x] **Health Checks** - HTTP and gRPC servers responding (8083, 50053)
 - [x] **PostgreSQL Connection** - Connected to trading_ecosystem database
 - [x] **Graceful Degradation** - Stub mode fallback working when infrastructure unavailable
 
@@ -304,8 +304,8 @@ audit-correlator:
     dockerfile: audit-correlator-go/Dockerfile
   image: audit-correlator:latest
   ports:
-    - "127.0.0.1:8083:8083"  # HTTP
-    - "127.0.0.1:9093:9093"  # gRPC
+    - "127.0.0.1:8082:8080"  # HTTP
+    - "127.0.0.1:50052:50051"  # gRPC
   networks:
     trading-ecosystem:
       ipv4_address: 172.20.0.80
@@ -315,7 +315,7 @@ audit-correlator:
 
 **Container Status**: ✅ Running and healthy
 - HTTP Server: http://localhost:8083/api/v1/health → {"status": "healthy"}
-- gRPC Server: Running on port 9093
+- gRPC Server: Running on port 50053
 - PostgreSQL: Connected successfully
 - Redis: Graceful fallback to stub mode (infrastructure dependencies)
 
@@ -347,7 +347,7 @@ audit-correlator:
 **Deployed**: 2025-10-01
 **Container**: trading-ecosystem-custodian-simulator
 **Network IP**: 172.20.0.81
-**Ports**: 8084 (HTTP), 9094 (gRPC)
+**Ports**: 8084 (HTTP), 50054 (gRPC)
 **Database User**: custodian_adapter
 **Redis User**: custodian-adapter
 **Status**: ✅ Running and healthy
@@ -364,7 +364,7 @@ audit-correlator:
 - ✅ PostgreSQL: Connected to custodian schema (verified with CRUD operations)
 - ✅ Redis: Service discovery operational (PING, SET, GET, DEL verified)
 - ✅ HTTP endpoint: {"service":"custodian-simulator","status":"healthy","version":"1.0.0"}
-- ✅ gRPC endpoint: Port 9094 operational
+- ✅ gRPC endpoint: Port 50054 operational
 - ✅ DataAdapter: Integrated successfully (logs: "Data adapter initialized successfully")
 - ✅ Service registered: registry:services:custodian-simulator in Redis
 
@@ -606,8 +606,8 @@ Add to `docker-compose.yml` (after audit-correlator service):
     container_name: trading-ecosystem-custodian-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8084"  # HTTP
-      - "127.0.0.1:9094:9094"  # gRPC
+      - "127.0.0.1:8083:8080"  # HTTP
+      - "127.0.0.1:50053:50051"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
@@ -619,7 +619,7 @@ Add to `docker-compose.yml` (after audit-correlator service):
 
       # Server Configuration
       - HTTP_PORT=8084
-      - GRPC_PORT=9094
+      - GRPC_PORT=50054
 
       # PostgreSQL Configuration (custodian_adapter user)
       - POSTGRES_URL=postgres://custodian_adapter:custodian-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -686,7 +686,7 @@ curl http://localhost:8084/api/v1/ready
 **Acceptance Criteria**:
 - [ ] Service definition added to docker-compose.yml
 - [ ] Build context configured to parent directory
-- [ ] Ports mapped correctly (8084, 9094)
+- [ ] Ports mapped correctly (8084, 50054)
 - [ ] Network IP assigned (172.20.0.81)
 - [ ] Environment variables configured
 - [ ] Health checks configured
@@ -777,10 +777,10 @@ curl -s http://localhost:8084/api/v1/metrics
 **gRPC Service**:
 ```bash
 # Test gRPC health check (if grpcurl installed)
-grpcurl -plaintext localhost:9094 grpc.health.v1.Health/Check
+grpcurl -plaintext localhost:50054 grpc.health.v1.Health/Check
 
 # List gRPC services
-grpcurl -plaintext localhost:9094 list
+grpcurl -plaintext localhost:50054 list
 ```
 
 **Database Connectivity**:
@@ -1242,8 +1242,8 @@ Add to `docker-compose.yml` (after custodian-simulator service):
     container_name: trading-ecosystem-exchange-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8085:8085"  # HTTP
-      - "127.0.0.1:9095:9095"  # gRPC
+      - "127.0.0.1:8084:8080"  # HTTP
+      - "127.0.0.1:50054:50051"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
@@ -1800,8 +1800,8 @@ Add to `docker-compose.yml` (after exchange-simulator service):
     container_name: trading-ecosystem-market-data-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8086:8086"  # HTTP
-      - "127.0.0.1:9096:9096"  # gRPC
+      - "127.0.0.1:8085:8086"  # HTTP
+      - "127.0.0.1:50055:9096"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.83

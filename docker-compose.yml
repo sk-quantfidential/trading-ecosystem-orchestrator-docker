@@ -41,6 +41,30 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
 
+  # Redis Exporter - Prometheus Metrics for Redis
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: trading-ecosystem-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9121:9121"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.11
+    environment:
+      - REDIS_ADDR=redis://172.20.0.10:6379
+      - REDIS_USER=healthcheck
+      - REDIS_PASSWORD=health-pass
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   # PostgreSQL - Persistent Data Storage
   postgres:
     image: postgres:17-alpine
@@ -68,13 +92,35 @@ services:
       retries: 3
       start_period: 30s
 
+  # PostgreSQL Exporter - Prometheus Metrics for PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: trading-ecosystem-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9187:9187"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.21
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres-admin-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   # Service Registry and Configuration
   service-registry:
     image: alpine:3.19
     container_name: trading-ecosystem-registry
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8081:8080"
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.30
@@ -245,8 +291,8 @@ services:
     container_name: trading-ecosystem-audit-correlator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8083:8080"   # HTTP port (external:internal)
-      - "127.0.0.1:9093:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8082:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50052:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.80
@@ -304,8 +350,8 @@ services:
     container_name: trading-ecosystem-custodian-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8080"   # HTTP port (external:internal)
-      - "127.0.0.1:9094:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8083:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50053:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
@@ -372,8 +418,8 @@ services:
     container_name: trading-ecosystem-exchange-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8082:8080"   # HTTP port (external:internal)
-      - "127.0.0.1:9092:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8084:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50054:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
@@ -438,8 +484,8 @@ services:
     container_name: trading-ecosystem-market-data-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8088:8080"   # HTTP port (external:internal)
-      - "127.0.0.1:9098:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8085:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50055:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.84
@@ -498,8 +544,8 @@ services:
     container_name: trading-ecosystem-risk-monitor
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8085:8080"  # HTTP port (external:internal)
-      - "127.0.0.1:50054:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8086:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50056:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.85
@@ -567,8 +613,8 @@ services:
     container_name: trading-ecosystem-trading-system-engine
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8086:8080"  # HTTP port (external:internal)
-      - "127.0.0.1:50053:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8087:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50057:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.86
@@ -642,8 +688,8 @@ services:
     container_name: trading-ecosystem-test-coordinator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8087:8080"  # HTTP port (external:internal)
-      - "127.0.0.1:50055:50051"  # gRPC port (external:internal)
+      - "127.0.0.1:8088:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50058:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.87

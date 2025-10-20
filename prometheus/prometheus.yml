@@ -26,27 +26,36 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: /metrics
 
-  # Infrastructure services
+  # Infrastructure services (via Prometheus exporters)
   - job_name: 'redis'
     static_configs:
-      - targets: ['172.20.0.10:6379']
+      - targets: ['172.20.0.11:9121']  # Redis exporter
+        labels:
+          service: 'redis'
+          service_type: 'infrastructure'
     scrape_interval: 30s
     metrics_path: /metrics
     scrape_timeout: 10s
 
   - job_name: 'postgres'
     static_configs:
-      - targets: ['172.20.0.20:5432']
+      - targets: ['172.20.0.21:9187']  # PostgreSQL exporter
+        labels:
+          service: 'postgres'
+          service_type: 'infrastructure'
     scrape_interval: 30s
     metrics_path: /metrics
     scrape_timeout: 10s
 
-  # Service registry health endpoint
+  # Service registry metrics endpoint
   - job_name: 'service-registry'
     static_configs:
       - targets: ['172.20.0.30:8080']
+        labels:
+          service: 'service-registry'
+          service_type: 'infrastructure'
     scrape_interval: 15s
-    metrics_path: /health
+    metrics_path: /metrics
     scrape_timeout: 5s
 
   # Audit Correlator - Singleton Service (TSE-0001.12.0)
@@ -100,7 +109,7 @@ scrape_configs:
   # Risk Monitor - Singleton Python Service (TSE-0001.12.0)
   - job_name: 'risk-monitor'
     static_configs:
-      - targets: ['172.20.0.85:8084']
+      - targets: ['172.20.0.85:8080']
         labels:
           service: 'risk-monitor'
           instance_name: 'risk-monitor'
@@ -113,20 +122,20 @@ scrape_configs:
   # Trading System Engine - Singleton Python Service (TSE-0001.12.0)
   - job_name: 'trading-system-engine'
     static_configs:
-      - targets: ['172.20.0.86:8083']
+      - targets: ['172.20.0.86:8080']
         labels:
           service: 'trading-system-engine'
           instance_name: 'trading-system-engine'
           service_type: 'singleton'
           environment: 'docker'
     scrape_interval: 15s
-    metrics_path: /metrics
+    metrics_path: /api/v1/metrics
     scrape_timeout: 5s
 
   # Test Coordinator - Singleton Python Service (TSE-0001.12.0)
   - job_name: 'test-coordinator'
     static_configs:
-      - targets: ['172.20.0.87:8087']
+      - targets: ['172.20.0.87:8080']
         labels:
           service: 'test-coordinator'
           instance_name: 'test-coordinator'

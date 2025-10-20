@@ -30,7 +30,7 @@ This repository provides the foundational infrastructure for the Trading Ecosyst
 - Docker 24.0+ (with Compose plugin)
 - Docker Compose V2 (modern `docker compose` command)
 - 4GB RAM minimum (8GB recommended for full observability stack)
-- Available ports: 3000, 5432, 6379, 8080, 9090, 16686, 4317, 4318
+- Available ports: 3000, 5432, 6379, 8080, 9090, 16686, 4317, 4318, 50051
 
 > **Note**: This project uses the modern `docker compose` command (with space) instead of the deprecated `docker-compose` (with hyphen). If you're using an older Docker installation, please upgrade to Docker 24.0+ which includes Compose V2.
 
@@ -553,12 +553,12 @@ networks:
 
 | Service | Internal Port | External Port | Purpose |
 |---------|---------------|---------------|---------|
-| Exchange Simulator | 8080 | 8080 | REST API |
-| Custodian Simulator | 8081 | 8081 | REST API |
-| Market Data Simulator | 8082 | 8082 | REST API |
-| Trading Engine | 8083 | 8083 | REST API |
-| Risk Monitor | 8084 | 8084 | Dashboard + API |
-| Test Coordinator | 8085 | 8085 | Scenario API |
+| Exchange Simulator | 8080 | 8081 | REST API |
+| Custodian Simulator | 8080 | 8082 | REST API |
+| Market Data Simulator | 8080 | 8082 | REST API |
+| Trading Engine | 8080 | 8083 | REST API |
+| Risk Monitor | 8080 | 8084 | Dashboard + API |
+| Test Coordinator | 8080 | 8085 | Scenario API |
 | Grafana | 3000 | 3000 | Dashboards |
 | Prometheus | 9090 | 9090 | Metrics |
 | Jaeger | 16686 | 16686 | Tracing |
@@ -609,7 +609,7 @@ networks:
 ## 🐛 Known Issues
 
 ### Common Deployment Issues
-- **Port conflicts**: Ensure ports 8080-8085, 3000, 9090, 16686 are available
+- **Port conflicts**: Ensure ports 8080-8085, 3000, 9090, 16686, 50051, are available
 - **Memory constraints**: Requires minimum 8GB RAM for full ecosystem
 - **API rate limits**: Market data APIs may require paid plans for sustained testing
 - **Container startup timing**: Some services may need retry logic for dependency startup
