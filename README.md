@@ -439,7 +439,7 @@ ENABLE_AUDIT_LOGGING=true
 - Active scenario status
 - Risk alert summary
 
-#### **Risk Monitoring Dashboard** 
+#### **Risk Monitoring Dashboard**
 - Position limits and utilization
 - Risk alert timeline
 - Compliance status tracking
@@ -550,6 +550,7 @@ networks:
 ```
 
 ### Port Allocation
+
 | Service | Internal Port | External Port | Purpose |
 |---------|---------------|---------------|---------|
 | Exchange Simulator | 8080 | 8080 | REST API |
