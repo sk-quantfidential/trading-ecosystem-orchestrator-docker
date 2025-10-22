@@ -198,8 +198,7 @@ Both 3b and 3c can proceed in parallel once the infrastructure foundation is val
 - TSE-0001.3b: Go Services gRPC Integration
 - TSE-0001.3c: Python Services gRPC Integration
 
-Both can proceed in parallel with the completed infrastructure foundation.
----
+Both can proceed in parallel with the completed infrastructure foundation
 
 ## 🔄 Milestone TSE-0001.4: Data Adapters & Orchestrator Integration
 
@@ -458,7 +457,7 @@ COMMENT ON TABLE custodian.balances IS 'Account balance tracking with locked/ava
 COMMENT ON TABLE custodian.audit_events IS 'Audit trail for custodian operations';
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Apply schema (if orchestrator is running)
 docker exec trading-ecosystem-postgres psql -U postgres -d trading_ecosystem -f /docker-entrypoint-initdb.d/02-init-custodian-schema.sql
@@ -495,7 +494,7 @@ Add the following user definition:
 user custodian-adapter on >custodian-pass ~custodian:* +@read +@write +@keyspace +ping -@dangerous
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Reload ACL (if orchestrator is running)
 docker exec trading-ecosystem-redis redis-cli ACL LOAD
@@ -592,7 +591,7 @@ Add to `docker-compose.yml` (after audit-correlator service):
 - 172.20.0.82: exchange-simulator (future)
 - 172.20.0.83: market-data-simulator (future)
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Build image (from parent directory)
 cd /path/to/trading-ecosystem
@@ -651,7 +650,7 @@ Verify the following in docker-compose.yml:
 - ✅ CACHE_NAMESPACE=custodian
 - ✅ SERVICE_DISCOVERY_NAMESPACE=custodian
 
-#### Validation Tests:
+#### Validation Tests
 ```bash
 # Test PostgreSQL connectivity from container
 docker exec trading-ecosystem-custodian-simulator wget -O- "postgres://custodian_adapter:custodian-adapter-db-pass@172.20.0.20:5432/trading_ecosystem"
@@ -748,7 +747,7 @@ docker logs trading-ecosystem-custodian-simulator | grep -i "server started\|lis
 docker logs trading-ecosystem-custodian-simulator | grep -i "adapter connected\|stub mode"
 ```
 
-#### Integration Tests (if implemented):
+#### Integration Tests (if implemented)
 ```bash
 # Run integration tests from custodian-simulator-go
 cd /path/to/trading-ecosystem/custodian-simulator-go
@@ -1093,7 +1092,7 @@ COMMENT ON TABLE exchange.balances IS 'Account balances with locked/available sp
 COMMENT ON TABLE exchange.order_history IS 'Audit trail for order state changes';
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Apply schema (if orchestrator is running)
 docker exec trading-ecosystem-postgres psql -U postgres -d trading_ecosystem -f /docker-entrypoint-initdb.d/03-init-exchange-schema.sql
@@ -1131,7 +1130,7 @@ Add the following user definition:
 user exchange-adapter on >exchange-pass ~exchange:* +@read +@write +@keyspace +ping -@dangerous
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Reload ACL (if orchestrator is running)
 docker exec trading-ecosystem-redis redis-cli ACL LOAD
@@ -1228,7 +1227,7 @@ Add to `docker-compose.yml` (after custodian-simulator service):
 - **172.20.0.82: exchange-simulator** ← New service
 - 172.20.0.83: market-data-simulator (future)
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Build image (from parent directory)
 cd /path/to/trading-ecosystem
@@ -1287,7 +1286,7 @@ Verify the following in docker-compose.yml:
 - ✅ CACHE_NAMESPACE=exchange
 - ✅ SERVICE_DISCOVERY_NAMESPACE=exchange
 
-#### Validation Tests:
+#### Validation Tests
 ```bash
 # Test PostgreSQL connectivity from container
 docker exec trading-ecosystem-exchange-simulator wget -O- "postgres://exchange_adapter:exchange-adapter-db-pass@172.20.0.20:5432/trading_ecosystem"
@@ -1387,7 +1386,7 @@ docker logs trading-ecosystem-exchange-simulator | grep -i "server started\|list
 docker logs trading-ecosystem-exchange-simulator | grep -i "adapter connected\|stub mode"
 ```
 
-#### Integration Tests (if implemented):
+#### Integration Tests (if implemented)
 ```bash
 # Run integration tests from exchange-simulator-go
 cd /path/to/trading-ecosystem/exchange-simulator-go
@@ -1651,7 +1650,7 @@ COMMENT ON TABLE market_data.market_snapshots IS 'Periodic market state snapshot
 COMMENT ON TABLE market_data.symbols IS 'Trading symbol metadata and configuration';
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Apply schema (if orchestrator is running)
 docker exec trading-ecosystem-postgres psql -U postgres -d trading_ecosystem -f /docker-entrypoint-initdb.d/04-init-market-data-schema.sql
@@ -1689,7 +1688,7 @@ Add the following user definition:
 user market-data-adapter on >market-data-pass ~market_data:* +@read +@write +@keyspace +ping -@dangerous
 ```
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Reload ACL (if orchestrator is running)
 docker exec trading-ecosystem-redis redis-cli ACL LOAD
@@ -1791,7 +1790,7 @@ Add to `docker-compose.yml` (after exchange-simulator service):
 - 172.20.0.82: exchange-simulator
 - **172.20.0.83: market-data-simulator** ← New service (FINAL Go service!)
 
-#### Validation Commands:
+#### Validation Commands
 ```bash
 # Build image (from parent directory)
 cd /path/to/trading-ecosystem
@@ -1856,7 +1855,7 @@ Verify the following in docker-compose.yml:
 - ✅ PRICE_UPDATE_INTERVAL configured
 - ✅ CANDLE_INTERVAL configured
 
-#### Validation Tests:
+#### Validation Tests
 ```bash
 # Test PostgreSQL connectivity from container
 docker exec trading-ecosystem-market-data-simulator wget -O- "postgres://market_data_adapter:market-data-adapter-db-pass@172.20.0.20:5432/trading_ecosystem"
@@ -1965,7 +1964,7 @@ docker logs trading-ecosystem-market-data-simulator | grep -i "adapter connected
 docker logs trading-ecosystem-market-data-simulator | grep -i "price\|feed"
 ```
 
-#### Integration Tests (if implemented):
+#### Integration Tests (if implemented)
 ```bash
 # Run integration tests from market-data-simulator-go
 cd /path/to/trading-ecosystem/market-data-simulator-go
