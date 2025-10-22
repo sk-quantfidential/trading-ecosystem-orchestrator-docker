@@ -2,7 +2,7 @@
 
 **Epic:** TSE-0001 - Foundation Services & Infrastructure
 **Milestone:** TSE-0001.12.0 - Multi-Instance Infrastructure Foundation
-**Branch:** `feature/TSE-0001.12.0-named-components-foundation`
+**Branch:** `feature/epic-TSE-0001-named-components-foundation`
 **Status:** ✅ Ready for Merge
 **Last Updated:** 2025-10-07
 
@@ -81,7 +81,7 @@ Examples:
 
 ### 1. audit-data-adapter-go (3 commits)
 
-**Branch:** `feature/TSE-0001.12.0-named-components-foundation`
+**Branch:** `feature/epic-TSE-0001-named-components-foundation`
 
 #### Phase 0 (CRITICAL): Configuration Foundation
 **Commit:** `17ed329`
@@ -157,7 +157,7 @@ Examples:
 
 ### 2. audit-correlator-go (4 commits)
 
-**Branch:** `feature/TSE-0001.12.0-named-components-foundation`
+**Branch:** `feature/epic-TSE-0001-named-components-foundation`
 
 #### Phase 1: Configuration Layer
 **Commit:** `24efc4f`
@@ -254,7 +254,7 @@ Metadata: map[string]string{
 
 ### 3. orchestrator-docker (3 commits)
 
-**Branch:** `feature/TSE-0001.12.0-named-components-foundation`
+**Branch:** `feature/epic-TSE-0001-named-components-foundation`
 
 #### Phase 5: Docker Deployment Configuration
 **Commit:** `233e0d3`
@@ -446,7 +446,7 @@ sum by (instance_name) (up)
 
 ### 4. project-plan (1 commit)
 
-**Branch:** `feature/TSE-0001.12.0-named-components-foundation`
+**Branch:** `feature/epic-TSE-0001-named-components-foundation`
 
 **Commit:** `debf84c`
 
@@ -517,19 +517,19 @@ cd /home/skingham/Projects/Quantfidential/trading-ecosystem
 
 # audit-data-adapter-go
 cd audit-data-adapter-go
-git checkout feature/TSE-0001.12.0-named-components-foundation
+git checkout feature/epic-TSE-0001-named-components-foundation
 
 # audit-correlator-go
 cd ../audit-correlator-go
-git checkout feature/TSE-0001.12.0-named-components-foundation
+git checkout feature/epic-TSE-0001-named-components-foundation
 
 # orchestrator-docker
 cd ../orchestrator-docker
-git checkout feature/TSE-0001.12.0-named-components-foundation
+git checkout feature/epic-TSE-0001-named-components-foundation
 
 # project-plan
 cd ../project-plan
-git checkout feature/TSE-0001.12.0-named-components-foundation
+git checkout feature/epic-TSE-0001-named-components-foundation
 ```
 
 ### Unit Tests (audit-data-adapter-go)
