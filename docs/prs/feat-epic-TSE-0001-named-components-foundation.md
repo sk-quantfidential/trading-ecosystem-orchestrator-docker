@@ -77,7 +77,7 @@ Examples:
 
 ---
 
-## Repository Changes
+## What Changed
 
 ### 1. audit-data-adapter-go (3 commits)
 
