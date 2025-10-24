@@ -1,6 +1,8 @@
 # Trading Ecosystem Infrastructure
 # Redis for service discovery and caching + PostgreSQL for persistent storage
 
+name: trading-ecosystem-orchestrator-docker
+
 networks:
   trading-ecosystem:
     driver: bridge
@@ -20,7 +22,7 @@ services:
   # Redis - Service Discovery and Caching
   redis:
     image: redis:8-alpine
-    container_name: trading-ecosystem-redis
+    container_name: trading-ecosystem-redis-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:6379:6379"
@@ -44,7 +46,7 @@ services:
   # Redis Exporter - Prometheus Metrics for Redis
   redis-exporter:
     image: oliver006/redis_exporter:latest
-    container_name: trading-ecosystem-redis-exporter
+    container_name: trading-ecosystem-redis-exporter-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:9121:9121"
@@ -68,7 +70,7 @@ services:
   # PostgreSQL - Persistent Data Storage
   postgres:
     image: postgres:17-alpine
-    container_name: trading-ecosystem-postgres
+    container_name: trading-ecosystem-postgres-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:5432:5432"
@@ -95,7 +97,7 @@ services:
   # PostgreSQL Exporter - Prometheus Metrics for PostgreSQL
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: trading-ecosystem-postgres-exporter
+    container_name: trading-ecosystem-postgres-exporter-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:9187:9187"
@@ -117,7 +119,7 @@ services:
   # Service Registry and Configuration
   service-registry:
     image: alpine:3.19
-    container_name: trading-ecosystem-registry
+    container_name: trading-ecosystem-registry-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:8081:8080"
@@ -143,7 +145,7 @@ services:
   # Prometheus - Metrics Collection and Monitoring
   prometheus:
     image: prom/prometheus:v2.47.2
-    container_name: trading-ecosystem-prometheus
+    container_name: trading-ecosystem-prometheus-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:9090:9090"
@@ -180,7 +182,7 @@ services:
   # Grafana - Visualization and Dashboards
   grafana:
     image: grafana/grafana:10.2.2
-    container_name: trading-ecosystem-grafana
+    container_name: trading-ecosystem-grafana-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
@@ -213,7 +215,7 @@ services:
   # Jaeger - Distributed Tracing
   jaeger:
     image: jaegertracing/all-in-one:1.51.0
-    container_name: trading-ecosystem-jaeger
+    container_name: trading-ecosystem-jaeger-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:16686:16686"  # Jaeger UI
@@ -253,7 +255,7 @@ services:
   # OpenTelemetry Collector - Telemetry Aggregation
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.88.0
-    container_name: trading-ecosystem-otel-collector
+    container_name: trading-ecosystem-otel-collector-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:4317:4317"   # OTLP gRPC receiver
@@ -347,7 +349,7 @@ services:
       context: ..
       dockerfile: custodian-simulator-go/Dockerfile
     image: custodian-simulator:latest
-    container_name: trading-ecosystem-custodian-simulator
+    container_name: trading-ecosystem-custodian-komainu
     restart: unless-stopped
     ports:
       - "127.0.0.1:8083:8080"   # HTTP port (external:internal)
@@ -356,12 +358,12 @@ services:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
     volumes:
-      - ./volumes/custodian-simulator/data:/app/data
-      - ./volumes/custodian-simulator/logs:/app/logs
+      - ./volumes/custodian-komainu/data:/app/data
+      - ./volumes/custodian-komainu/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=custodian-simulator
-      - SERVICE_INSTANCE_NAME=custodian-simulator  # Singleton instance
+      - SERVICE_INSTANCE_NAME=custodian-komainu
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
@@ -415,7 +417,7 @@ services:
       context: ..
       dockerfile: exchange-simulator-go/Dockerfile
     image: exchange-simulator:latest
-    container_name: trading-ecosystem-exchange-simulator
+    container_name: trading-ecosystem-exchange-okx
     restart: unless-stopped
     ports:
       - "127.0.0.1:8084:8080"   # HTTP port (external:internal)
@@ -423,10 +425,13 @@ services:
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
+    volumes:
+      - ./volumes/exchange-okx/data:/app/data
+      - ./volumes/exchange-okx/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=exchange-simulator
-      - SERVICE_INSTANCE_NAME=exchange-simulator
+      - SERVICE_INSTANCE_NAME=exchange-okx
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
@@ -481,7 +486,7 @@ services:
       context: ..
       dockerfile: market-data-simulator-go/Dockerfile
     image: market-data-simulator:latest
-    container_name: trading-ecosystem-market-data-simulator
+    container_name: trading-ecosystem-market-data-coinmetrics
     restart: unless-stopped
     ports:
       - "127.0.0.1:8085:8080"   # HTTP port (external:internal)
@@ -490,12 +495,12 @@ services:
       trading-ecosystem:
         ipv4_address: 172.20.0.84
     volumes:
-      - ./volumes/market-data-simulator/data:/app/data
-      - ./volumes/market-data-simulator/logs:/app/logs
+      - ./volumes/market-data-coinmetrics/data:/app/data
+      - ./volumes/market-data-coinmetrics/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=market-data-simulator
-      - SERVICE_INSTANCE_NAME=market-data-simulator  # Singleton instance
+      - SERVICE_INSTANCE_NAME=market-data-coinmetrics
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
@@ -541,7 +546,7 @@ services:
       context: ..
       dockerfile: risk-monitor-py/Dockerfile
     image: risk-monitor:latest
-    container_name: trading-ecosystem-risk-monitor
+    container_name: trading-ecosystem-risk-monitor-lh
     restart: unless-stopped
     ports:
       - "127.0.0.1:8086:8080"  # HTTP port (external:internal)
@@ -550,12 +555,12 @@ services:
       trading-ecosystem:
         ipv4_address: 172.20.0.85
     volumes:
-      - ./volumes/risk-monitor/data:/app/data
-      - ./volumes/risk-monitor/logs:/app/logs
+      - ./volumes/risk-monitor-lh/data:/app/data
+      - ./volumes/risk-monitor-lh/logs:/app/logs
     environment:
       # Service Identity (NEW for multi-instance support)
       - SERVICE_NAME=risk-monitor
-      - SERVICE_INSTANCE_NAME=risk-monitor  # Singleton instance
+      - SERVICE_INSTANCE_NAME=risk-monitor-lh
       - ENVIRONMENT=docker
 
       # Network Configuration
@@ -575,7 +580,7 @@ services:
 
       # Risk Data Adapter Configuration
       - RISK_ADAPTER_SERVICE_NAME=risk-monitor
-      - RISK_ADAPTER_SERVICE_INSTANCE_NAME=risk-monitor
+      - RISK_ADAPTER_SERVICE_INSTANCE_NAME=risk-monitor-lh
       - RISK_ADAPTER_ENVIRONMENT=docker
       - RISK_ADAPTER_POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
       - RISK_ADAPTER_REDIS_URL=redis://risk-adapter:risk-pass@172.20.0.10:6379/0
@@ -610,7 +615,7 @@ services:
       context: ..
       dockerfile: trading-system-engine-py/Dockerfile
     image: trading-system-engine:latest
-    container_name: trading-ecosystem-trading-system-engine
+    container_name: trading-ecosystem-trading-engine-lh
     restart: unless-stopped
     ports:
       - "127.0.0.1:8087:8080"  # HTTP port (external:internal)
@@ -619,12 +624,12 @@ services:
       trading-ecosystem:
         ipv4_address: 172.20.0.86
     volumes:
-      - ./volumes/trading-system-engine/data:/app/data
-      - ./volumes/trading-system-engine/logs:/app/logs
+      - ./volumes/trading-engine-lh/data:/app/data
+      - ./volumes/trading-engine-lh/logs:/app/logs
     environment:
       # Service Identity (NEW for multi-instance support)
       - SERVICE_NAME=trading-system-engine
-      - SERVICE_INSTANCE_NAME=trading-system-engine  # Singleton instance
+      - SERVICE_INSTANCE_NAME=trading-engine-lh
       - SERVICE_VERSION=0.1.0
       - ENVIRONMENT=docker
 
@@ -644,7 +649,7 @@ services:
 
       # Trading Data Adapter Configuration
       - TRADING_ADAPTER_SERVICE_NAME=trading-system-engine
-      - TRADING_ADAPTER_SERVICE_INSTANCE_NAME=trading-system-engine
+      - TRADING_ADAPTER_SERVICE_INSTANCE_NAME=trading-engine-lh
       - TRADING_ADAPTER_ENVIRONMENT=docker
       - TRADING_ADAPTER_POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
       - TRADING_ADAPTER_REDIS_URL=redis://trading-adapter:trading-pass@172.20.0.10:6379/0

@@ -12,11 +12,11 @@ set -e
 SERVICES=(
     "audit-correlator"      # Singleton
     "test-coordinator"      # Singleton
-    "exchange-OKX"          # Multi-instance example
-    "custodian-Komainu"     # Multi-instance example
-    "market-data-Coinmetrics"  # Multi-instance example
-    "trading-system-LH"     # Multi-instance example
-    "risk-monitor-LH"       # Multi-instance example
+    "exchange-okx"          # Multi-instance example (lowercase for DNS-safe)
+    "custodian-komainu"     # Multi-instance example (lowercase for DNS-safe)
+    "market-data-coinmetrics"  # Multi-instance example (lowercase for DNS-safe)
+    "trading-engine-lh"     # Multi-instance example (lowercase for DNS-safe)
+    "risk-monitor-lh"       # Multi-instance example (lowercase for DNS-safe)
 )
 
 echo "Initializing Docker volumes for service instances..."

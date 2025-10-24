@@ -40,11 +40,11 @@ TSE-0001.12.0 enables two DevOps views for monitoring:
 **Purpose**: Monitor trading simulation as business entities
 
 **Panels**:
-- Trading system status (e.g., trading-system-LH)
-- Exchange connectivity (e.g., exchange-OKX, exchange-Binance)
-- Custodian status (e.g., custodian-Komainu)
-- Market data feeds (e.g., market-data-Coinmetrics)
-- Risk monitoring (e.g., risk-monitor-LH)
+- Trading system status (e.g., trading-engine-lh)
+- Exchange connectivity (e.g., exchange-okx, exchange-binance)
+- Custodian status (e.g., custodian-komainu)
+- Market data feeds (e.g., market-data-coinmetrics)
+- Risk monitoring (e.g., risk-monitor-lh)
 
 **Business Metrics**:
 - Order flow and execution rates
@@ -93,27 +93,27 @@ scrape_configs:
   # Multi-instance: exchange simulators
   - job_name: 'exchange-simulator'
     static_configs:
-      - targets: ['exchange-okx:8081']
+      - targets: ['exchange-okx:8084']
         labels:
           service: 'exchange-simulator'
-          instance_name: 'exchange-OKX'
+          instance_name: 'exchange-okx'
           service_type: 'multi-instance'
           entity_type: 'exchange'
 
-      - targets: ['exchange-binance:8081']
+      - targets: ['exchange-binance:8084']
         labels:
           service: 'exchange-simulator'
-          instance_name: 'exchange-Binance'
+          instance_name: 'exchange-binance'
           service_type: 'multi-instance'
           entity_type: 'exchange'
 
   # Multi-instance: custodian simulators
   - job_name: 'custodian-simulator'
     static_configs:
-      - targets: ['custodian-komainu:8082']
+      - targets: ['custodian-komainu:8083']
         labels:
           service: 'custodian-simulator'
-          instance_name: 'custodian-Komainu'
+          instance_name: 'custodian-komainu'
           service_type: 'multi-instance'
           entity_type: 'custodian'
 ```
@@ -126,7 +126,7 @@ scrape_configs:
 up{job=~"audit-correlator|exchange-simulator|custodian-simulator|.*"}
 
 # Specific instance health
-up{instance_name="exchange-OKX"}
+up{instance_name="exchange-okx"}
 
 # All exchanges
 up{entity_type="exchange"}
@@ -180,7 +180,7 @@ sum by (entity_type) (up)
 
 **Panel 1: Trading System Status**
 - Visualization: Stat
-- Query: `up{instance_name=~"trading-system-.*"}`
+- Query: `up{instance_name=~"trading-engine-.*"}`
 - Group by: instance_name
 
 **Panel 2: Exchange Connectivity**
