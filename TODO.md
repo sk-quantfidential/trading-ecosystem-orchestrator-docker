@@ -1,6 +1,75 @@
-# orchestrator-docker - TSE-0001.3a Core Infrastructure Setup
+# orchestrator-docker - Component TODO
 
-## Milestone: TSE-0001.3a - Core Infrastructure Setup
+## Current Milestone: TSE-0001.12.0 - Multi-Instance Infrastructure Foundation
+**Status**: ✅ **COMPLETED** (2025-10-07)
+**Goal**: Enable multi-instance deployment with named components for Grafana monitoring
+**Components**: orchestrator-docker, audit-data-adapter-go, audit-correlator-go, project-plan
+**Dependencies**: TSE-0001.4 (Data Adapters & Orchestrator Refactoring) ✅
+
+### 🎯 BDD Acceptance Criteria
+> Services support multi-instance deployment with separate PostgreSQL schemas and Redis namespaces, enabling instance-aware Grafana monitoring
+
+### ✅ Completed Tasks (orchestrator-docker)
+
+#### Phase 5: Docker Deployment Configuration
+- [x] Added SERVICE_INSTANCE_NAME environment variable to audit-correlator service
+- [x] Added Docker volume mappings for data and logs directories
+  - [x] `./volumes/audit-correlator/data:/app/data`
+  - [x] `./volumes/audit-correlator/logs:/app/logs`
+- [x] Created `scripts/init-volumes.sh` for automated volume initialization
+- [x] Pre-configured for singleton services (audit-correlator, test-coordinator)
+- [x] Pre-configured for multi-instance services (exchange-OKX, custodian-Komainu, etc.)
+- [x] Executable permissions on init script
+
+#### Phase 6: PostgreSQL Schema Initialization
+- [x] Created "audit" schema for singleton audit-correlator instance
+- [x] Maintained "audit_correlator" schema for backward compatibility
+- [x] Added automated migration from public schema to audit schema
+- [x] Created complete table structure in both schemas:
+  - [x] audit_events table with indexes
+  - [x] service_registrations table for service discovery
+  - [x] audit_correlations table for event correlations
+  - [x] service_metrics table for performance tracking
+- [x] Configured permissions for audit_adapter user
+- [x] Configured permissions for monitor_user
+- [x] Created trigger functions for updated_at columns
+- [x] Updated health_check() function to include both schemas
+
+#### Phase 8: Grafana Dashboards
+- [x] Created `grafana/dashboards/` directory structure
+- [x] Comprehensive README.md with dashboard setup guide
+- [x] Documented two dashboard views:
+  - [x] Docker Infrastructure View (all containers as infrastructure)
+  - [x] Simulation Entity View (trading entities as business components)
+- [x] Prometheus scrape configuration examples
+- [x] PromQL queries for instance-aware monitoring
+- [x] Variable templates for dynamic filtering
+- [x] Manual dashboard creation instructions
+- [x] Health check integration documentation
+
+### 📝 Files Modified/Created
+- **Modified**: `docker-compose.yml` (audit-correlator service config)
+- **Modified**: `postgres/init/02-audit-correlator-schema.sql` (multi-instance schema support)
+- **Created**: `scripts/init-volumes.sh` (volume initialization automation)
+- **Created**: `grafana/dashboards/README.md` (comprehensive dashboard guide)
+
+### 🚀 Feature Branch
+- Branch: `feature/TSE-0001.12.0-named-components-foundation`
+- Commits: 3
+  - Phase 5: Docker deployment configuration
+  - Phase 6: PostgreSQL schema initialization
+  - Phase 8: Grafana dashboards
+
+### 📊 Related Milestones
+- **Cross-Component**: TSE-0001.12.0 involves 4 repositories
+  - audit-data-adapter-go: Phases 0, 3, 4
+  - audit-correlator-go: Phases 1, 2, 7
+  - orchestrator-docker: Phases 5, 6, 8
+  - project-plan: Documentation
+
+---
+
+## Previous Milestone: TSE-0001.3a - Core Infrastructure Setup
 **Status**: Validation Required
 **Goal**: Establish shared data infrastructure and service discovery
 **Components**: Infrastructure
@@ -214,7 +283,7 @@ Both can proceed in parallel with the completed infrastructure foundation
 - [x] **docker-compose.yml Integration** - Added build context and service definition
 - [x] **Service Configuration** - Environment variables for PostgreSQL, Redis, and service identity
 - [x] **Container Deployment** - Successfully running in trading-ecosystem network (172.20.0.80)
-- [x] **Health Checks** - HTTP and gRPC servers responding (8083, 9093)
+- [x] **Health Checks** - HTTP and gRPC servers responding (8083, 50053)
 - [x] **PostgreSQL Connection** - Connected to trading_ecosystem database
 - [x] **Graceful Degradation** - Stub mode fallback working when infrastructure unavailable
 
@@ -235,8 +304,8 @@ audit-correlator:
     dockerfile: audit-correlator-go/Dockerfile
   image: audit-correlator:latest
   ports:
-    - "127.0.0.1:8083:8083"  # HTTP
-    - "127.0.0.1:9093:9093"  # gRPC
+    - "127.0.0.1:8082:8080"  # HTTP
+    - "127.0.0.1:50052:50051"  # gRPC
   networks:
     trading-ecosystem:
       ipv4_address: 172.20.0.80
@@ -246,7 +315,7 @@ audit-correlator:
 
 **Container Status**: ✅ Running and healthy
 - HTTP Server: http://localhost:8083/api/v1/health → {"status": "healthy"}
-- gRPC Server: Running on port 9093
+- gRPC Server: Running on port 50053
 - PostgreSQL: Connected successfully
 - Redis: Graceful fallback to stub mode (infrastructure dependencies)
 
@@ -278,7 +347,7 @@ audit-correlator:
 **Deployed**: 2025-10-01
 **Container**: trading-ecosystem-custodian-simulator
 **Network IP**: 172.20.0.81
-**Ports**: 8084 (HTTP), 9094 (gRPC)
+**Ports**: 8084 (HTTP), 50054 (gRPC)
 **Database User**: custodian_adapter
 **Redis User**: custodian-adapter
 **Status**: ✅ Running and healthy
@@ -295,7 +364,7 @@ audit-correlator:
 - ✅ PostgreSQL: Connected to custodian schema (verified with CRUD operations)
 - ✅ Redis: Service discovery operational (PING, SET, GET, DEL verified)
 - ✅ HTTP endpoint: {"service":"custodian-simulator","status":"healthy","version":"1.0.0"}
-- ✅ gRPC endpoint: Port 9094 operational
+- ✅ gRPC endpoint: Port 50054 operational
 - ✅ DataAdapter: Integrated successfully (logs: "Data adapter initialized successfully")
 - ✅ Service registered: registry:services:custodian-simulator in Redis
 
@@ -537,8 +606,8 @@ Add to `docker-compose.yml` (after audit-correlator service):
     container_name: trading-ecosystem-custodian-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8084"  # HTTP
-      - "127.0.0.1:9094:9094"  # gRPC
+      - "127.0.0.1:8083:8080"  # HTTP
+      - "127.0.0.1:50053:50051"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
@@ -550,7 +619,7 @@ Add to `docker-compose.yml` (after audit-correlator service):
 
       # Server Configuration
       - HTTP_PORT=8084
-      - GRPC_PORT=9094
+      - GRPC_PORT=50054
 
       # PostgreSQL Configuration (custodian_adapter user)
       - POSTGRES_URL=postgres://custodian_adapter:custodian-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -617,7 +686,7 @@ curl http://localhost:8084/api/v1/ready
 **Acceptance Criteria**:
 - [ ] Service definition added to docker-compose.yml
 - [ ] Build context configured to parent directory
-- [ ] Ports mapped correctly (8084, 9094)
+- [ ] Ports mapped correctly (8084, 50054)
 - [ ] Network IP assigned (172.20.0.81)
 - [ ] Environment variables configured
 - [ ] Health checks configured
@@ -708,10 +777,10 @@ curl -s http://localhost:8084/api/v1/metrics
 **gRPC Service**:
 ```bash
 # Test gRPC health check (if grpcurl installed)
-grpcurl -plaintext localhost:9094 grpc.health.v1.Health/Check
+grpcurl -plaintext localhost:50054 grpc.health.v1.Health/Check
 
 # List gRPC services
-grpcurl -plaintext localhost:9094 list
+grpcurl -plaintext localhost:50054 list
 ```
 
 **Database Connectivity**:
@@ -1173,8 +1242,8 @@ Add to `docker-compose.yml` (after custodian-simulator service):
     container_name: trading-ecosystem-exchange-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8085:8085"  # HTTP
-      - "127.0.0.1:9095:9095"  # gRPC
+      - "127.0.0.1:8084:8080"  # HTTP
+      - "127.0.0.1:50054:50051"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
@@ -1731,8 +1800,8 @@ Add to `docker-compose.yml` (after exchange-simulator service):
     container_name: trading-ecosystem-market-data-simulator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8086:8086"  # HTTP
-      - "127.0.0.1:9096:9096"  # gRPC
+      - "127.0.0.1:8085:8086"  # HTTP
+      - "127.0.0.1:50055:9096"  # gRPC
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.83

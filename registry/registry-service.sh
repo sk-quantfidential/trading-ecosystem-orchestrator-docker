@@ -8,7 +8,10 @@ set -e
 echo "Starting Trading Ecosystem Service Registry..."
 
 # Install required packages
-apk add --no-cache curl jq redis postgresql-client python3
+apk add --no-cache curl jq redis postgresql-client python3 py3-pip
+
+# Install prometheus_client via pip
+pip3 install --break-system-packages prometheus-client
 
 # Wait for dependencies
 echo "Waiting for Redis..."
@@ -119,15 +122,43 @@ redis-cli -h 172.20.0.10 -p 6379 --no-auth-warning -u "redis://registry:registry
 
 echo "Service registry configuration completed!"
 
-# Simple Python HTTP server for health checks
+# Python HTTP server for health checks and Prometheus metrics
 cat > /tmp/health-server.py << 'EOF'
 #!/usr/bin/env python3
 import json
 import http.server
 import socketserver
 from datetime import datetime
+from prometheus_client import Counter, Gauge, CollectorRegistry, generate_latest
 
-class HealthHandler(http.server.BaseHTTPRequestHandler):
+# Create Prometheus registry and metrics
+registry = CollectorRegistry()
+
+# Service registry metrics
+service_registrations = Counter(
+    'service_registry_registrations_total',
+    'Total number of service registrations',
+    ['service'],
+    registry=registry
+)
+
+service_health_status = Gauge(
+    'service_registry_health_status',
+    'Service health status (1=healthy, 0=unhealthy)',
+    ['service'],
+    registry=registry
+)
+
+# Set initial health status for infrastructure services
+service_health_status.labels(service='redis').set(1)
+service_health_status.labels(service='postgres').set(1)
+service_health_status.labels(service='service-registry').set(1)
+
+# Count registrations (8 infrastructure + 2 application services from startup)
+service_registrations.labels(service='infrastructure').inc(8)
+service_registrations.labels(service='application').inc(2)
+
+class HealthMetricsHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
             response = {
@@ -139,12 +170,19 @@ class HealthHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
+        elif self.path == '/metrics':
+            metrics_output = generate_latest(registry)
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(metrics_output)
         else:
             self.send_response(404)
             self.end_headers()
 
-with socketserver.TCPServer(("", 8080), HealthHandler) as httpd:
-    print("Health check server listening on port 8080...")
+with socketserver.TCPServer(("", 8080), HealthMetricsHandler) as httpd:
+    print("Health check and metrics server listening on port 8080...")
+    print("Endpoints: /health (JSON), /metrics (Prometheus)")
     httpd.serve_forever()
 EOF
 

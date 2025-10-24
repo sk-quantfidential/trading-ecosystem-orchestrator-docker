@@ -1,6 +1,8 @@
 # Trading Ecosystem Infrastructure
 # Redis for service discovery and caching + PostgreSQL for persistent storage
 
+name: trading-ecosystem-orchestrator-docker
+
 networks:
   trading-ecosystem:
     driver: bridge
@@ -20,7 +22,7 @@ services:
   # Redis - Service Discovery and Caching
   redis:
     image: redis:8-alpine
-    container_name: trading-ecosystem-redis
+    container_name: trading-ecosystem-redis-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:6379:6379"
@@ -41,10 +43,34 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
 
+  # Redis Exporter - Prometheus Metrics for Redis
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: trading-ecosystem-redis-exporter-infra
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9121:9121"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.11
+    environment:
+      - REDIS_ADDR=redis://172.20.0.10:6379
+      - REDIS_USER=healthcheck
+      - REDIS_PASSWORD=health-pass
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   # PostgreSQL - Persistent Data Storage
   postgres:
     image: postgres:17-alpine
-    container_name: trading-ecosystem-postgres
+    container_name: trading-ecosystem-postgres-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:5432:5432"
@@ -68,13 +94,35 @@ services:
       retries: 3
       start_period: 30s
 
+  # PostgreSQL Exporter - Prometheus Metrics for PostgreSQL
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: trading-ecosystem-postgres-exporter-infra
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9187:9187"
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.21
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres-admin-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   # Service Registry and Configuration
   service-registry:
     image: alpine:3.19
-    container_name: trading-ecosystem-registry
+    container_name: trading-ecosystem-registry-infra
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8081:8080"
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.30
@@ -97,7 +145,7 @@ services:
   # Prometheus - Metrics Collection and Monitoring
   prometheus:
     image: prom/prometheus:v2.47.2
-    container_name: trading-ecosystem-prometheus
+    container_name: trading-ecosystem-prometheus-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:9090:9090"
@@ -134,7 +182,7 @@ services:
   # Grafana - Visualization and Dashboards
   grafana:
     image: grafana/grafana:10.2.2
-    container_name: trading-ecosystem-grafana
+    container_name: trading-ecosystem-grafana-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
@@ -167,7 +215,7 @@ services:
   # Jaeger - Distributed Tracing
   jaeger:
     image: jaegertracing/all-in-one:1.51.0
-    container_name: trading-ecosystem-jaeger
+    container_name: trading-ecosystem-jaeger-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:16686:16686"  # Jaeger UI
@@ -207,7 +255,7 @@ services:
   # OpenTelemetry Collector - Telemetry Aggregation
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.88.0
-    container_name: trading-ecosystem-otel-collector
+    container_name: trading-ecosystem-otel-collector-infra
     restart: unless-stopped
     ports:
       - "127.0.0.1:4317:4317"   # OTLP gRPC receiver
@@ -245,20 +293,24 @@ services:
     container_name: trading-ecosystem-audit-correlator
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8083:8083"  # HTTP port
-      - "127.0.0.1:9093:9093"  # gRPC port
+      - "127.0.0.1:8082:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50052:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.80
+    volumes:
+      - ./volumes/audit-correlator/data:/app/data
+      - ./volumes/audit-correlator/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=audit-correlator
+      - SERVICE_INSTANCE_NAME=audit-correlator  # Singleton instance
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8083
-      - GRPC_PORT=9093
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration
       - POSTGRES_URL=postgres://audit_adapter:audit-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -285,7 +337,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8083/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -297,23 +349,27 @@ services:
       context: ..
       dockerfile: custodian-simulator-go/Dockerfile
     image: custodian-simulator:latest
-    container_name: trading-ecosystem-custodian-simulator
+    container_name: trading-ecosystem-custodian-komainu
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8084:8084"  # HTTP port
-      - "127.0.0.1:9094:9094"  # gRPC port
+      - "127.0.0.1:8083:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50053:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.81
+    volumes:
+      - ./volumes/custodian-komainu/data:/app/data
+      - ./volumes/custodian-komainu/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=custodian-simulator
+      - SERVICE_INSTANCE_NAME=custodian-komainu
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8084
-      - GRPC_PORT=9094
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration (custodian_adapter user)
       - POSTGRES_URL=postgres://custodian_adapter:custodian-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -350,7 +406,7 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8084/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -361,23 +417,27 @@ services:
       context: ..
       dockerfile: exchange-simulator-go/Dockerfile
     image: exchange-simulator:latest
-    container_name: trading-ecosystem-exchange-simulator
+    container_name: trading-ecosystem-exchange-okx
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8082:8082"  # HTTP port
-      - "127.0.0.1:9092:9092"  # gRPC port
+      - "127.0.0.1:8084:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50054:50051"  # gRPC port (external:internal)
     networks:
       trading-ecosystem:
         ipv4_address: 172.20.0.82
+    volumes:
+      - ./volumes/exchange-okx/data:/app/data
+      - ./volumes/exchange-okx/logs:/app/logs
     environment:
       # Service Identity
       - SERVICE_NAME=exchange-simulator
+      - SERVICE_INSTANCE_NAME=exchange-okx
       - SERVICE_VERSION=1.0.0
       - ENVIRONMENT=docker
 
       # Network Configuration
-      - HTTP_PORT=8082
-      - GRPC_PORT=9092
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
 
       # Database Configuration (exchange_adapter user)
       - POSTGRES_URL=postgres://exchange_adapter:exchange-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
@@ -414,8 +474,288 @@ services:
       service-registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8082/api/v1/health"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 45s
+
+  # Market Data Simulator - Singleton Service (TSE-0001.12.0)
+  market-data-simulator:
+    build:
+      context: ..
+      dockerfile: market-data-simulator-go/Dockerfile
+    image: market-data-simulator:latest
+    container_name: trading-ecosystem-market-data-coinmetrics
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8085:8080"   # HTTP port (external:internal)
+      - "127.0.0.1:50055:50051"  # gRPC port (external:internal)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.84
+    volumes:
+      - ./volumes/market-data-coinmetrics/data:/app/data
+      - ./volumes/market-data-coinmetrics/logs:/app/logs
+    environment:
+      # Service Identity
+      - SERVICE_NAME=market-data-simulator
+      - SERVICE_INSTANCE_NAME=market-data-coinmetrics
+      - SERVICE_VERSION=1.0.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
+
+      # Database Configuration (market_data_adapter user)
+      - POSTGRES_URL=postgres://market_data_adapter:market-data-adapter-db-pass@172.20.0.20:5432/trading_ecosystem?sslmode=disable
+      - REDIS_URL=redis://market-data-adapter:market-data-pass@172.20.0.10:6379/0
+
+      # Configuration Service
+      - CONFIG_SERVICE_URL=http://172.20.0.30:8080
+
+      # Connection Settings
+      - REQUEST_TIMEOUT=5s
+
+      # Cache Configuration
+      - CACHE_TTL=5m
+
+      # Health Check
+      - HEALTH_CHECK_INTERVAL=30s
+
+      # Logging
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  # Risk Monitor - Production-like Risk Monitoring
+  risk-monitor:
+    build:
+      context: ..
+      dockerfile: risk-monitor-py/Dockerfile
+    image: risk-monitor:latest
+    container_name: trading-ecosystem-risk-monitor-lh
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8086:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50056:50051"  # gRPC port (external:internal)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.85
+    volumes:
+      - ./volumes/risk-monitor-lh/data:/app/data
+      - ./volumes/risk-monitor-lh/logs:/app/logs
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=risk-monitor
+      - SERVICE_INSTANCE_NAME=risk-monitor-lh
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://risk-adapter:risk-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - SERVICE_VERSION=0.1.0
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Risk Data Adapter Configuration
+      - RISK_ADAPTER_SERVICE_NAME=risk-monitor
+      - RISK_ADAPTER_SERVICE_INSTANCE_NAME=risk-monitor-lh
+      - RISK_ADAPTER_ENVIRONMENT=docker
+      - RISK_ADAPTER_POSTGRES_URL=postgresql+asyncpg://risk_adapter:risk-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - RISK_ADAPTER_REDIS_URL=redis://risk-adapter:risk-pass@172.20.0.10:6379/0
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=risk-monitor
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ============================================================================
+  # Trading System Engine - Systematic Trading Service
+  # ============================================================================
+  trading-system-engine:
+    build:
+      context: ..
+      dockerfile: trading-system-engine-py/Dockerfile
+    image: trading-system-engine:latest
+    container_name: trading-ecosystem-trading-engine-lh
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8087:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50057:50051"  # gRPC port (external:internal)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.86
+    volumes:
+      - ./volumes/trading-engine-lh/data:/app/data
+      - ./volumes/trading-engine-lh/logs:/app/logs
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=trading-system-engine
+      - SERVICE_INSTANCE_NAME=trading-engine-lh
+      - SERVICE_VERSION=0.1.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://trading-adapter:trading-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Trading Data Adapter Configuration
+      - TRADING_ADAPTER_SERVICE_NAME=trading-system-engine
+      - TRADING_ADAPTER_SERVICE_INSTANCE_NAME=trading-engine-lh
+      - TRADING_ADAPTER_ENVIRONMENT=docker
+      - TRADING_ADAPTER_POSTGRES_URL=postgresql+asyncpg://trading_adapter:trading-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - TRADING_ADAPTER_REDIS_URL=redis://trading-adapter:trading-pass@172.20.0.10:6379/0
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=trading-system-engine
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+
+      # Trading Engine Settings
+      - MAX_POSITION_SIZE=1000000.0
+      - RISK_LIMIT_THRESHOLD=500000.0
+      - ORDER_TIMEOUT_SECONDS=30
+      - STRATEGY_COOLDOWN_SECONDS=60
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  # ============================================================================
+  # Test Coordinator - Scenario Orchestration and Chaos Testing
+  # ============================================================================
+  test-coordinator:
+    build:
+      context: ..
+      dockerfile: test-coordinator-py/Dockerfile
+    image: test-coordinator:latest
+    container_name: trading-ecosystem-test-coordinator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8088:8080"  # HTTP port (external:internal)
+      - "127.0.0.1:50058:50051"  # gRPC port (external:internal)
+    networks:
+      trading-ecosystem:
+        ipv4_address: 172.20.0.87
+    volumes:
+      - ./volumes/test-coordinator/data:/app/data
+      - ./volumes/test-coordinator/logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for container orchestration
+    environment:
+      # Service Identity (NEW for multi-instance support)
+      - SERVICE_NAME=test-coordinator
+      - SERVICE_INSTANCE_NAME=test-coordinator  # Singleton instance
+      - SERVICE_VERSION=0.1.0
+      - ENVIRONMENT=docker
+
+      # Network Configuration
+      - HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - GRPC_PORT=50051
+
+      # Database Configuration
+      - POSTGRES_URL=postgresql+asyncpg://test_coordinator_adapter:test-coordinator-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - REDIS_URL=redis://test-coordinator-adapter:test-coordinator-pass@172.20.0.10:6379/0
+
+      # Service Discovery
+      - SERVICE_REGISTRY_URL=http://172.20.0.30:8080
+      - HEALTH_CHECK_INTERVAL=30
+      - REGISTRATION_RETRY_INTERVAL=5
+
+      # Test Coordinator Data Adapter Configuration
+      - TEST_COORDINATOR_ADAPTER_SERVICE_NAME=test-coordinator
+      - TEST_COORDINATOR_ADAPTER_SERVICE_INSTANCE_NAME=test-coordinator
+      - TEST_COORDINATOR_ADAPTER_ENVIRONMENT=docker
+      - TEST_COORDINATOR_ADAPTER_POSTGRES_URL=postgresql+asyncpg://test_coordinator_adapter:test-coordinator-adapter-db-pass@172.20.0.20:5432/trading_ecosystem
+      - TEST_COORDINATOR_ADAPTER_REDIS_URL=redis://test-coordinator-adapter:test-coordinator-pass@172.20.0.10:6379/0
+
+      # Docker Configuration
+      - DOCKER_SOCKET=unix:///var/run/docker.sock
+
+      # OpenTelemetry
+      - OTEL_SERVICE_NAME=test-coordinator
+      - OTEL_EXPORTER_ENDPOINT=http://172.20.0.60:4317
+      - OTEL_INSECURE=true
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+
+      # Test Coordination Settings
+      - SCENARIO_TIMEOUT_SECONDS=3600
+      - CHAOS_INJECTION_ENABLED=true
+      - SCENARIO_RESULTS_RETENTION_DAYS=7
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
