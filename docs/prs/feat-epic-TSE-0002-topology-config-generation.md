@@ -45,7 +45,7 @@ Adds topology configuration generation script and Docker volume mounting to prov
 
 ## Generated Topology Structure
 
-### Services (7 nodes):
+### Services (7 nodes)
 1. **Audit Correlator** (audit-correlator-go) - Monitoring
 2. **Custodian Komainu** (custodian-simulator-go) - Simulator
 3. **Exchange OKX** (exchange-simulator-go) - Simulator
@@ -54,7 +54,7 @@ Adds topology configuration generation script and Docker volume mounting to prov
 6. **Trading Engine LH** (trading-system-engine-py) - Trading
 7. **Test Coordinator** (test-coordinator-py) - Orchestration
 
-### Connections (11 edges):
+### Connections (11 edges)
 - Risk Monitor → Trading Engine (monitors)
 - Trading Engine → Exchange (trades_via)
 - Trading Engine → Custodian (custodies_via)

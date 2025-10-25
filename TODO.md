@@ -1,6 +1,41 @@
 # orchestrator-docker - Component TODO
 
-## Current Milestone: TSE-0001.12.0 - Multi-Instance Infrastructure Foundation
+## Current Milestone: TSE-0002 - Network Topology Visualization
+
+### 🌐 Milestone TSE-0002.Orchestrator: Topology Configuration Generation
+**Status**: ✅ **COMPLETED** (2025-10-27)
+**Priority**: High
+**Branch**: `feature/epic-TSE-0002-topology-config-generation`
+
+**Completed Tasks**:
+- [x] Generate topology.json configuration from docker-compose.yml
+- [x] Python generation script (scripts/generate-topology-config.py)
+- [x] Automated service node extraction (7 services)
+- [x] Automated connection edge derivation (11 connections)
+- [x] Validation and testing of generated configuration
+- [x] Documentation (PR and deployment summary)
+- [x] Markdown linting fixes
+
+**Deliverables**:
+- ✅ scripts/generate-topology-config.py (topology generator)
+- ✅ config/topology.json (generated configuration)
+- ✅ docs/prs/feat-epic-TSE-0002-topology-config-generation.md (PR doc)
+- ✅ docs/TOPOLOGY_DEPLOYMENT_SUMMARY.md (deployment guide)
+
+**BDD Acceptance**: ✅ Topology configuration is automatically generated from docker-compose.yml and consumed by audit-correlator-go TopologyService for browser visualization.
+
+**Integration Points**:
+- audit-correlator-go: Reads topology.json via volume mount
+- simulator-ui-js: Fetches topology via Connect protocol from audit-correlator-go
+- docker-compose.yml: Source of truth for service topology
+
+**Next Steps**:
+- Deploy to production and verify browser visualization
+- Add more connection types as services evolve
+
+---
+
+## Previous Milestone: TSE-0001.12.0 - Multi-Instance Infrastructure Foundation
 **Status**: ✅ **COMPLETED** (2025-10-07)
 **Goal**: Enable multi-instance deployment with named components for Grafana monitoring
 **Components**: orchestrator-docker, audit-data-adapter-go, audit-correlator-go, project-plan
