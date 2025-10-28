@@ -1,6 +1,40 @@
 # orchestrator-docker - Component TODO
 
-## Current Milestone: TSE-0002 - Network Topology Visualization
+## Current Milestone: TODO Journal System - Validation Script Updates
+
+### 🔧 Chore: TODO Journal System Implementation
+**Status**: ✅ **COMPLETED** (2025-10-28)
+**Priority**: Medium
+**Branch**: `chore/epic-TSE-0001-todo-journal-system`
+**Type**: Process Improvement
+
+**Completed Tasks**:
+- [x] Updated scripts/validate-repository.sh to check for TODO.md OR TODO-MASTER.md
+- [x] Updated scripts/validate-all.sh to accept either TODO file pattern
+- [x] Updated scripts/pre-push-hook.sh to detect and validate either TODO file
+- [x] Created PR documentation (docs/prs/chore-epic-TSE-0001-todo-journal-system.md)
+- [x] Tested validation scripts locally
+- [x] Verified pattern consistency with other 8 repositories
+
+**Deliverables**:
+- ✅ scripts/validate-repository.sh (updated validation logic)
+- ✅ scripts/validate-all.sh (updated required files check)
+- ✅ scripts/pre-push-hook.sh (updated TODO file detection)
+- ✅ docs/prs/chore-epic-TSE-0001-todo-journal-system.md (PR documentation)
+
+**Context**:
+Part of ecosystem-wide TODO journal system rollout to archive completed milestones and keep TODO files focused on active work. This enables:
+- Project-plan to use TODO-MASTER.md for cross-component coordination
+- Component repos to use TODO.md for component-specific milestones
+- Validation scripts to accept both patterns without false warnings
+
+**BDD Acceptance**: ✅ Validation scripts correctly handle both TODO.md and TODO-MASTER.md patterns without reporting false warnings.
+
+**Rollout Status**: All 9 repositories updated with consistent validation logic
+
+---
+
+## Previous Milestone: TSE-0002 - Network Topology Visualization
 
 ### 🌐 Milestone TSE-0002.Orchestrator: Topology Configuration Generation
 **Status**: ✅ **COMPLETED** (2025-10-27)
