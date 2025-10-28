@@ -301,6 +301,7 @@ services:
     volumes:
       - ./volumes/audit-correlator/data:/app/data
       - ./volumes/audit-correlator/logs:/app/logs
+      - ./config:/app/config:ro  # Mount topology config (read-only)
     environment:
       # Service Identity
       - SERVICE_NAME=audit-correlator

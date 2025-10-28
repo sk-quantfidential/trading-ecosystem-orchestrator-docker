@@ -1,0 +1,302 @@
+{
+  "version": "1.0",
+  "generated_at": "startup",
+  "nodes": [
+    {
+      "id": "node-audit-correlator",
+      "name": "Audit Correlator",
+      "service_type": "audit-correlator-go",
+      "category": "monitoring",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50052",
+        "http": "localhost:8082",
+        "internal_ip": "172.20.0.80"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-custodian-komainu",
+      "name": "Custodian Komainu",
+      "service_type": "custodian-simulator-go",
+      "category": "simulator",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50053",
+        "http": "localhost:8083",
+        "internal_ip": "172.20.0.81"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-exchange-okx",
+      "name": "Exchange Okx",
+      "service_type": "exchange-simulator-go",
+      "category": "simulator",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50054",
+        "http": "localhost:8084",
+        "internal_ip": "172.20.0.82"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-market-data-coinmetrics",
+      "name": "Market Data Coinmetrics",
+      "service_type": "market-data-simulator-go",
+      "category": "simulator",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50055",
+        "http": "localhost:8085",
+        "internal_ip": "172.20.0.84"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-risk-monitor-lh",
+      "name": "Risk Monitor Lh",
+      "service_type": "risk-monitor-py",
+      "category": "monitoring",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50056",
+        "http": "localhost:8086",
+        "internal_ip": "172.20.0.85"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-trading-engine-lh",
+      "name": "Trading Engine Lh",
+      "service_type": "trading-system-engine-py",
+      "category": "trading",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50057",
+        "http": "localhost:8087",
+        "internal_ip": "172.20.0.86"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    },
+    {
+      "id": "node-test-coordinator",
+      "name": "Test Coordinator",
+      "service_type": "test-coordinator-py",
+      "category": "orchestration",
+      "status": "LIVE",
+      "version": "1.0.0",
+      "endpoints": {
+        "grpc": "localhost:50058",
+        "http": "localhost:8088",
+        "internal_ip": "172.20.0.87"
+      },
+      "health": {
+        "cpu_percent": 0.0,
+        "memory_mb": 0.0,
+        "total_requests": 0,
+        "total_errors": 0,
+        "error_rate": 0.0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-risk-monitor-lh-to-trading-engine-lh",
+      "source_id": "node-risk-monitor-lh",
+      "target_id": "node-trading-engine-lh",
+      "protocol": "gRPC",
+      "relationship": "monitors",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-trading-engine-lh-to-exchange-okx",
+      "source_id": "node-trading-engine-lh",
+      "target_id": "node-exchange-okx",
+      "protocol": "gRPC",
+      "relationship": "trades_via",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-trading-engine-lh-to-custodian-komainu",
+      "source_id": "node-trading-engine-lh",
+      "target_id": "node-custodian-komainu",
+      "protocol": "gRPC",
+      "relationship": "custodies_via",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-market-data-coinmetrics-to-trading-engine-lh",
+      "source_id": "node-market-data-coinmetrics",
+      "target_id": "node-trading-engine-lh",
+      "protocol": "gRPC",
+      "relationship": "provides_data_to",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-audit-correlator-to-risk-monitor-lh",
+      "source_id": "node-audit-correlator",
+      "target_id": "node-risk-monitor-lh",
+      "protocol": "gRPC",
+      "relationship": "audits",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-audit-correlator-to-trading-engine-lh",
+      "source_id": "node-audit-correlator",
+      "target_id": "node-trading-engine-lh",
+      "protocol": "gRPC",
+      "relationship": "audits",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-audit-correlator-to-exchange-okx",
+      "source_id": "node-audit-correlator",
+      "target_id": "node-exchange-okx",
+      "protocol": "gRPC",
+      "relationship": "audits",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-audit-correlator-to-custodian-komainu",
+      "source_id": "node-audit-correlator",
+      "target_id": "node-custodian-komainu",
+      "protocol": "gRPC",
+      "relationship": "audits",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-audit-correlator-to-market-data-coinmetrics",
+      "source_id": "node-audit-correlator",
+      "target_id": "node-market-data-coinmetrics",
+      "protocol": "gRPC",
+      "relationship": "audits",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-test-coordinator-to-trading-engine-lh",
+      "source_id": "node-test-coordinator",
+      "target_id": "node-trading-engine-lh",
+      "protocol": "gRPC",
+      "relationship": "tests",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    },
+    {
+      "id": "edge-test-coordinator-to-risk-monitor-lh",
+      "source_id": "node-test-coordinator",
+      "target_id": "node-risk-monitor-lh",
+      "protocol": "gRPC",
+      "relationship": "tests",
+      "status": "ACTIVE",
+      "metrics": {
+        "latency_p50_ms": 10.0,
+        "latency_p99_ms": 50.0,
+        "throughput_rps": 100.0,
+        "error_rate": 0.001
+      }
+    }
+  ]
+}
