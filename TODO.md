@@ -2,7 +2,6 @@
 
 > **Note**: Completed milestones are archived in [TODO-HISTORY.md](./TODO-HISTORY.md). This file tracks active and future work.
 
-
 ## Current Milestone: TODO Journal System - Validation Script Updates
 
 ### 🔧 Chore: TODO Journal System Implementation
